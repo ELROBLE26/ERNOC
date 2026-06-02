@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ADQ_OPTIONS,
-  AFT_OPTIONS,
-  CALIDAD_OPTIONS,
-  ESTADO_OPTIONS,
-  MANT_OPTIONS,
-  SINIES_OPTIONS,
-  VIDRIO_OPTIONS,
-} from '../utils/fleet';
+import { PROBLEM_FIELDS, buildExclusiveProblemPatch } from '../utils/fleet';
 
-const OPER_VALUES = ['OK', 'NO', 'PENDIENTE'];
-const TERMINALS = ['El Roble', 'La Reina'];
+const PROBLEM_COLUMNS = [
+  { field: 'oper', label: 'OPER' },
+  { field: 'vidrio', label: 'VIDRIO' },
+  { field: 'mant', label: 'MANT' },
+  { field: 'calidad', label: 'CALIDAD' },
+  { field: 'adq', label: 'ADQ' },
+  { field: 'aft', label: 'AFT' },
+  { field: 'sinies', label: 'SINIES' },
+];
 
 export function NfcOperModal({
   open,
@@ -22,8 +21,7 @@ export function NfcOperModal({
   onSave,
   onCancel,
 }) {
-  const needsTerminal = terminalFilter === 'Todos';
-  const defaultTerminal = needsTerminal ? '' : terminalFilter;
+  const defaultTerminal = terminalFilter;
   const [form, setForm] = useState(() => buildInitialForm(defaultTerminal));
 
   useEffect(() => {
@@ -32,18 +30,24 @@ export function NfcOperModal({
     }
   }, [defaultTerminal, open, nfcUid]);
 
-  const showDetails = form.estado !== 'OPERATIVO';
+  const selectedProblem = PROBLEM_FIELDS.find((field) => String(form[field] ?? '').toUpperCase() === 'X');
+  const showDetails = Boolean(selectedProblem);
   const canSave = Boolean(form.terminal && bus?.cod && bus?.ppu);
 
   const payload = useMemo(() => {
-    if (form.estado === 'OPERATIVO') {
+    const hasProblem = PROBLEM_FIELDS.some((field) => String(form[field] ?? '').toUpperCase() === 'X');
+
+    if (!hasProblem) {
       return {
         ...buildInitialForm(form.terminal),
         terminal: form.terminal,
       };
     }
 
-    return form;
+    return {
+      ...form,
+      estado: 'NO OPERATIVO',
+    };
   }, [form]);
 
   useEffect(() => {
@@ -64,7 +68,7 @@ export function NfcOperModal({
         return;
       }
 
-      if (event.key === 'Enter' && form.estado === 'OPERATIVO') {
+      if (event.key === 'Enter') {
         event.preventDefault();
         onSave(payload);
       }
@@ -82,7 +86,15 @@ export function NfcOperModal({
     setForm((current) => ({
       ...current,
       [field]: value,
-      ...(field === 'terminal' && !current.ubicacion ? { ubicacion: value } : {}),
+    }));
+  };
+
+  const setProblem = (field) => {
+    setForm((current) => ({
+      ...current,
+      ...buildExclusiveProblemPatch(
+        String(current[field] ?? '').toUpperCase() === 'X' ? '' : field,
+      ),
     }));
   };
 
@@ -105,31 +117,25 @@ export function NfcOperModal({
           <DataPoint label="Terminal" value={form.terminal || 'Seleccionar'} />
         </div>
 
-        <div className="modal-grid">
-          {needsTerminal ? (
-            <SelectField
-              label="Terminal obligatorio"
-              value={form.terminal}
-              onChange={(value) => updateField('terminal', value)}
-              options={['', ...TERMINALS]}
-            />
-          ) : null}
-          <SelectField
-            label="Estado"
-            value={form.estado}
-            onChange={(value) => updateField('estado', value)}
-            options={ESTADO_OPTIONS.filter((option) => option !== 'PENDIENTE')}
-          />
+        <div className="modal-grid nfc-status-grid">
+          <div className="modal-wide-field nfc-problem-picker">
+            <span>Marcar problema</span>
+            <div className="problem-picker-grid">
+              {PROBLEM_COLUMNS.map((column) => (
+                <button
+                  key={column.field}
+                  className={`problem-toggle modal-problem-toggle ${String(form[column.field] ?? '').toUpperCase() === 'X' ? 'problem-toggle-active' : ''}`}
+                  type="button"
+                  onClick={() => setProblem(column.field)}
+                >
+                  {String(form[column.field] ?? '').toUpperCase() === 'X' ? 'X' : ''}
+                  <small>{column.label}</small>
+                </button>
+              ))}
+            </div>
+          </div>
           {showDetails ? (
             <>
-              <SelectField label="OPER" value={form.oper} onChange={(value) => updateField('oper', value)} options={OPER_VALUES} />
-              <SelectField label="VIDRIO" value={form.vidrio} onChange={(value) => updateField('vidrio', value)} options={VIDRIO_OPTIONS} />
-              <SelectField label="MANT" value={form.mant} onChange={(value) => updateField('mant', value)} options={MANT_OPTIONS} />
-              <SelectField label="CALIDAD" value={form.calidad} onChange={(value) => updateField('calidad', value)} options={CALIDAD_OPTIONS} />
-              <SelectField label="ADQ" value={form.adq} onChange={(value) => updateField('adq', value)} options={ADQ_OPTIONS} />
-              <SelectField label="AFT" value={form.aft} onChange={(value) => updateField('aft', value)} options={AFT_OPTIONS} />
-              <SelectField label="SINIES" value={form.sinies} onChange={(value) => updateField('sinies', value)} options={SINIES_OPTIONS} />
-              <TextField label="Ubicacion" value={form.ubicacion} onChange={(value) => updateField('ubicacion', value)} />
               <TextArea label="Detalle Panne" value={form.detalle_panne} onChange={(value) => updateField('detalle_panne', value)} />
               <TextArea label="Observaciones" value={form.observaciones} onChange={(value) => updateField('observaciones', value)} />
             </>
@@ -163,13 +169,13 @@ function buildInitialForm(terminal) {
   return {
     terminal,
     estado: 'OPERATIVO',
-    oper: 'OK',
-    vidrio: 'OK',
-    mant: 'OK',
-    calidad: 'OK',
-    adq: 'OK',
-    aft: 'OK',
-    sinies: 'NO',
+    oper: '',
+    vidrio: '',
+    mant: '',
+    calidad: '',
+    adq: '',
+    aft: '',
+    sinies: '',
     detalle_panne: '',
     observaciones: '',
     ubicacion: terminal,
@@ -185,30 +191,6 @@ function DataPoint({ label, value }) {
   );
 }
 
-function SelectField({ label, value, onChange, options }) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => (
-          <option key={option || 'empty'} value={option}>
-            {option || 'Seleccionar'}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function TextField({ label, value, onChange }) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <input value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
-}
-
 function TextArea({ label, value, onChange }) {
   return (
     <label className="field modal-wide-field">
@@ -217,4 +199,3 @@ function TextArea({ label, value, onChange }) {
     </label>
   );
 }
-

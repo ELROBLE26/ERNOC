@@ -1,15 +1,19 @@
 import {
-  ADQ_OPTIONS,
-  AFT_OPTIONS,
-  CALIDAD_OPTIONS,
-  ESTADO_OPTIONS,
-  MANT_OPTIONS,
-  OPER_OPTIONS,
-  SINIES_OPTIONS,
-  VIDRIO_OPTIONS,
+  buildExclusiveProblemPatch,
   getStatusTone,
+  hasProblemX,
 } from '../utils/fleet';
 import { InlineField, SaveIndicator } from './InlineField';
+
+const PROBLEM_COLUMNS = [
+  { field: 'oper', label: 'OPER' },
+  { field: 'vidrio', label: 'VIDRIO' },
+  { field: 'mant', label: 'MANT' },
+  { field: 'calidad', label: 'CALIDAD' },
+  { field: 'adq', label: 'ADQ' },
+  { field: 'aft', label: 'AFT' },
+  { field: 'sinies', label: 'SINIES' },
+];
 
 export function EditableTable({
   rows,
@@ -40,13 +44,9 @@ export function EditableTable({
               <th className="sticky-col sticky-ppu">PPU</th>
               <th>ZONA</th>
               <th>SERVICIO</th>
-              <th>OPER</th>
-              <th>VIDRIO</th>
-              <th>MANT</th>
-              <th>CALIDAD</th>
-              <th>ADQ</th>
-              <th>AFT</th>
-              <th>SINIES</th>
+              {PROBLEM_COLUMNS.map((column) => (
+                <th className="problem-header" key={column.field}>{column.label}</th>
+              ))}
               <th>Detalle Panne</th>
               <th>Observaciones</th>
               <th>UBICACIÓN</th>
@@ -56,11 +56,12 @@ export function EditableTable({
           <tbody>
             {hasRows ? rows.map((row, index) => {
               const isSelected = row.id === selectedRowId;
+              const hasProblem = hasProblemX(row);
 
               return (
                 <tr
                   key={row.id}
-                  className={`${isSelected ? 'row-selected' : ''} ${row.id === highlightedRowId ? 'row-highlighted' : ''}`}
+                  className={`${isSelected ? 'row-selected' : ''} ${hasProblem ? 'row-problem' : ''} ${row.id === highlightedRowId ? 'row-highlighted' : ''}`}
                   onClick={() => onSelectRow(row.id)}
                 >
                   <td className="sticky-col sticky-num">
@@ -68,73 +69,33 @@ export function EditableTable({
                     <div className="terminal-tag">{row.terminal}</div>
                   </td>
                   <td className="sticky-col sticky-cod emphasis-cell">
-                    <InlineField value={row.cod} onSave={(value) => onSaveCell(row.id, { cod: value })} />
+                    <ReadOnlyCell value={row.cod} strong />
                   </td>
                   <td className="sticky-col sticky-ppu emphasis-cell">
-                    <InlineField value={row.ppu} onSave={(value) => onSaveCell(row.id, { ppu: value })} />
+                    <ReadOnlyCell value={row.ppu} strong />
                   </td>
                   <td>
-                    <InlineField value={row.zona} onSave={(value) => onSaveCell(row.id, { zona: value })} />
+                    <ReadOnlyCell value={row.zona} />
                   </td>
                   <td>
                     <InlineField value={row.servicio} onSave={(value) => onSaveCell(row.id, { servicio: value })} />
                   </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.oper}
-                      options={OPER_OPTIONS.slice(1)}
-                      onSave={(value) => onSaveCell(row.id, { oper: value })}
-                    />
-                  </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.vidrio}
-                      options={VIDRIO_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { vidrio: value })}
-                    />
-                  </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.mant}
-                      options={MANT_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { mant: value })}
-                    />
-                  </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.calidad}
-                      options={CALIDAD_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { calidad: value })}
-                    />
-                  </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.adq}
-                      options={ADQ_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { adq: value })}
-                    />
-                  </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.aft}
-                      options={AFT_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { aft: value })}
-                    />
-                  </td>
-                  <td>
-                    <InlineField
-                      type="select"
-                      value={row.sinies}
-                      options={SINIES_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { sinies: value })}
-                    />
-                  </td>
+                  {PROBLEM_COLUMNS.map((column) => (
+                    <td className="problem-cell" key={column.field}>
+                      <ProblemToggle
+                        active={String(row[column.field] ?? '').toUpperCase() === 'X'}
+                        label={column.label}
+                        onToggle={() =>
+                          onSaveCell(
+                            row.id,
+                            String(row[column.field] ?? '').toUpperCase() === 'X'
+                              ? buildExclusiveProblemPatch('')
+                              : buildExclusiveProblemPatch(column.field),
+                          )
+                        }
+                      />
+                    </td>
+                  ))}
                   <td className="wide-cell">
                     <InlineField
                       value={row.detalle_panne}
@@ -156,12 +117,6 @@ export function EditableTable({
                   </td>
                   <td>
                     <div className={`status-badge tone-${getStatusTone(row.estado)}`}>{row.estado || 'PENDIENTE'}</div>
-                    <InlineField
-                      type="select"
-                      value={row.estado}
-                      options={ESTADO_OPTIONS}
-                      onSave={(value) => onSaveCell(row.id, { estado: value })}
-                    />
                     <SaveIndicator state={rowStatuses[row.id]} />
                   </td>
                 </tr>
@@ -183,5 +138,26 @@ export function EditableTable({
         </table>
       </div>
     </section>
+  );
+}
+
+function ReadOnlyCell({ value, strong = false }) {
+  return <div className={`read-only-cell ${strong ? 'read-only-strong' : ''}`}>{value || '—'}</div>;
+}
+
+function ProblemToggle({ active, label, onToggle }) {
+  return (
+    <button
+      className={`problem-toggle ${active ? 'problem-toggle-active' : ''}`}
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+      title={active ? `Quitar problema ${label}` : `Marcar problema ${label}`}
+      aria-label={active ? `Quitar problema ${label}` : `Marcar problema ${label}`}
+    >
+      {active ? 'X' : ''}
+    </button>
   );
 }

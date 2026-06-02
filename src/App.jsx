@@ -21,7 +21,6 @@ import {
 } from './lib/nfcService';
 import {
   FILTER_DEFAULTS,
-  OPER_OPTIONS,
   ESTADO_OPTIONS,
   applyFleetFilters,
   computeCounters,
@@ -39,6 +38,7 @@ function App() {
     saveCell,
   } = useFleetData();
   const [filters, setFilters] = useState(FILTER_DEFAULTS);
+  const [workTerminal, setWorkTerminal] = useState('El Roble');
   const [selectedRowId, setSelectedRowId] = useState('');
   const [formBusy, setFormBusy] = useState(false);
   const [nfcActive, setNfcActive] = useState(true);
@@ -154,6 +154,10 @@ function App() {
       ...current,
       [field]: value,
     }));
+
+    if (field === 'terminal' && value !== 'Todos') {
+      setWorkTerminal(value);
+    }
   };
 
   const handleCreate = async (payload) => {
@@ -195,7 +199,13 @@ function App() {
       return;
     }
 
-    if (!operation.terminal || operation.terminal === 'Todos') {
+    const normalizedOperation = {
+      ...operation,
+      terminal: operation.terminal || workTerminal,
+      ubicacion: operation.ubicacion || operation.terminal || workTerminal,
+    };
+
+    if (!normalizedOperation.terminal || normalizedOperation.terminal === 'Todos') {
       setNfcError('Selecciona El Roble o La Reina antes de guardar.');
       return;
     }
@@ -204,12 +214,12 @@ function App() {
     setNfcError('');
 
     try {
-      const updatedBus = await updateFleetFromNfc(currentNfcBus, operation);
+      const updatedBus = await updateFleetFromNfc(currentNfcBus, normalizedOperation);
       await insertNfcLog(
         buildNfcLogPayload({
           nfcUid: currentNfcUid,
           bus: updatedBus,
-          operation,
+          operation: normalizedOperation,
           resultado: 'guardado',
         }),
       );
@@ -229,7 +239,7 @@ function App() {
         buildNfcLogPayload({
           nfcUid: currentNfcUid,
           bus: currentNfcBus,
-          operation,
+          operation: normalizedOperation,
           resultado: 'error',
           mensajeError: message,
         }),
@@ -383,6 +393,23 @@ function App() {
                 </div>
               </div>
               <div className="enterprise-header-meta">
+                <label className="work-terminal-control">
+                  <span>Terminal trabajo</span>
+                  <select
+                    value={workTerminal}
+                    onChange={(event) => {
+                      const terminal = event.target.value;
+                      setWorkTerminal(terminal);
+                      setFilters((current) => ({
+                        ...current,
+                        terminal,
+                      }));
+                    }}
+                  >
+                    <option value="El Roble">El Roble</option>
+                    <option value="La Reina">La Reina</option>
+                  </select>
+                </label>
                 <span>{new Date().toLocaleDateString('es-CL')}</span>
                 <strong>{filteredRows.length} buses</strong>
               </div>
@@ -401,7 +428,7 @@ function App() {
                 zoneOptions={zoneOptions}
                 serviceOptions={serviceOptions}
                 estadoOptions={['Todos', ...ESTADO_OPTIONS]}
-                operOptions={OPER_OPTIONS}
+                operOptions={['Todos', 'Con problema', 'Sin problema']}
               />
 
               <OperationsSummary
@@ -479,7 +506,7 @@ function App() {
             open={nfcOperOpen}
             nfcUid={currentNfcUid}
             bus={currentNfcBus}
-            terminalFilter={filters.terminal}
+            terminalFilter={workTerminal}
             saving={nfcSaving}
             error={nfcError}
             onSave={handleNfcSave}

@@ -1,4 +1,5 @@
 import { ensureSupabase } from './supabase';
+import { PROBLEM_FIELDS } from '../utils/fleet';
 
 const NFC_CARDS_TABLE = 'bus_nfc_cards';
 const NFC_LOG_TABLE = 'reporte_oper_nfc_log';
@@ -147,13 +148,13 @@ export async function insertNfcLog(payload) {
 export function buildOperativePayload(terminal) {
   return {
     estado: 'OPERATIVO',
-    oper: 'OK',
-    vidrio: 'OK',
-    mant: 'OK',
-    calidad: 'OK',
-    adq: 'OK',
-    aft: 'OK',
-    sinies: 'NO',
+    oper: '',
+    vidrio: '',
+    mant: '',
+    calidad: '',
+    adq: '',
+    aft: '',
+    sinies: '',
     detalle_panne: '',
     observaciones: '',
     ubicacion: terminal,
@@ -162,12 +163,14 @@ export function buildOperativePayload(terminal) {
 }
 
 export function buildFleetUpdatePayload(operation) {
-  if (operation.estado === 'OPERATIVO') {
+  const hasProblem = PROBLEM_FIELDS.some((field) => String(operation[field] ?? '').toUpperCase() === 'X');
+
+  if (!hasProblem) {
     return buildOperativePayload(operation.terminal);
   }
 
   return {
-    estado: operation.estado,
+    estado: 'NO OPERATIVO',
     oper: operation.oper,
     vidrio: operation.vidrio,
     mant: operation.mant,
@@ -207,4 +210,3 @@ export function buildNfcLogPayload({ nfcUid, bus, operation, resultado, mensajeE
 function escapeFilter(value) {
   return String(value).replaceAll(',', '\\,').replaceAll(')', '\\)');
 }
-

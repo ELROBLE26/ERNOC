@@ -1,5 +1,15 @@
-import { ESTADO_OPTIONS, OPER_OPTIONS, getStatusTone } from '../utils/fleet';
+import { buildExclusiveProblemPatch, getStatusTone, hasProblemX } from '../utils/fleet';
 import { InlineField, SaveIndicator } from './InlineField';
+
+const PROBLEM_COLUMNS = [
+  { field: 'oper', label: 'OPER' },
+  { field: 'vidrio', label: 'VIDRIO' },
+  { field: 'mant', label: 'MANT' },
+  { field: 'calidad', label: 'CALIDAD' },
+  { field: 'adq', label: 'ADQ' },
+  { field: 'aft', label: 'AFT' },
+  { field: 'sinies', label: 'SINIES' },
+];
 
 export function MobileFleetCards({ rows, selectedRowId, highlightedRowId, rowStatuses, onSelectRow, onSaveCell, onOpenConfiguration }) {
   if (!rows.length) {
@@ -24,7 +34,7 @@ export function MobileFleetCards({ rows, selectedRowId, highlightedRowId, rowSta
         return (
           <article
             key={row.id}
-            className={`mobile-card ${isSelected ? 'mobile-card-selected' : ''} ${row.id === highlightedRowId ? 'mobile-card-highlighted' : ''}`}
+            className={`mobile-card ${isSelected ? 'mobile-card-selected' : ''} ${hasProblemX(row) ? 'mobile-card-problem' : ''} ${row.id === highlightedRowId ? 'mobile-card-highlighted' : ''}`}
             onClick={() => onSelectRow(row.id)}
           >
             <div className="mobile-card-header">
@@ -43,31 +53,29 @@ export function MobileFleetCards({ rows, selectedRowId, highlightedRowId, rowSta
               <FieldLabel label="Ubicación" value={row.ubicacion} />
             </div>
 
+            <div className="mobile-problem-grid">
+              {PROBLEM_COLUMNS.map((column) => (
+                <button
+                  key={column.field}
+                  className={`problem-toggle mobile-problem-toggle ${String(row[column.field] ?? '').toUpperCase() === 'X' ? 'problem-toggle-active' : ''}`}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSaveCell(
+                      row.id,
+                      String(row[column.field] ?? '').toUpperCase() === 'X'
+                        ? buildExclusiveProblemPatch('')
+                        : buildExclusiveProblemPatch(column.field),
+                    );
+                  }}
+                >
+                  <span>{column.label}</span>
+                  <strong>{String(row[column.field] ?? '').toUpperCase() === 'X' ? 'X' : ''}</strong>
+                </button>
+              ))}
+            </div>
+
             <div className="mobile-edit-grid">
-              <InlineField
-                value={row.cod}
-                onSave={(value) => onSaveCell(row.id, { cod: value })}
-                className="mobile-inline"
-              />
-              <InlineField
-                value={row.ppu}
-                onSave={(value) => onSaveCell(row.id, { ppu: value })}
-                className="mobile-inline"
-              />
-              <InlineField
-                type="select"
-                value={row.oper}
-                options={OPER_OPTIONS.slice(1)}
-                onSave={(value) => onSaveCell(row.id, { oper: value })}
-                className="mobile-inline"
-              />
-              <InlineField
-                type="select"
-                value={row.estado}
-                options={ESTADO_OPTIONS}
-                onSave={(value) => onSaveCell(row.id, { estado: value })}
-                className="mobile-inline"
-              />
               <InlineField
                 value={row.detalle_panne}
                 multiline

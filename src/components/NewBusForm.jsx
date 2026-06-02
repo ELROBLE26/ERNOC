@@ -135,12 +135,6 @@ export function NewBusForm({
           options={['El Roble', 'La Reina']}
         />
         <FormField label="Zona" value={form.zona} onChange={(value) => handleChange('zona', value)} />
-        <SelectField
-          label="Estado"
-          value={form.estado}
-          onChange={(value) => handleChange('estado', value)}
-          options={['OPERATIVO', 'NO OPERATIVO', 'EN PANNE', 'EN MANTENCIÓN', 'OBSERVADO', 'PENDIENTE']}
-        />
         <FormField label="Ubicación" value={form.ubicacion} onChange={(value) => handleChange('ubicacion', value)} />
         <div className="create-submit">
           <button className="primary-button" type="submit" disabled={busy}>

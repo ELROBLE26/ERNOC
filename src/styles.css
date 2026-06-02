@@ -189,6 +189,30 @@ button {
   font-size: 0.66rem;
 }
 
+.work-terminal-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.work-terminal-control span {
+  color: #607293;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.work-terminal-control select {
+  min-height: 28px;
+  border: 1px solid #cbd8ea;
+  border-radius: 7px;
+  background: #f8fbff;
+  color: #10254f;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 3px 7px;
+}
+
 .enterprise-header-meta strong {
   color: #17326b;
   font-size: 0.72rem;
@@ -482,7 +506,7 @@ button {
 .fleet-table th,
 .fleet-table td {
   padding: 5px 6px;
-  min-width: 70px;
+  min-width: 72px;
   border-bottom: 1px solid #edf2f8;
   background: #fff;
   vertical-align: top;
@@ -497,10 +521,19 @@ button {
   font-size: 0.62rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .fleet-table td {
   font-size: 0.72rem;
+}
+
+.problem-header,
+.problem-cell {
+  width: 66px;
+  min-width: 66px;
+  max-width: 66px;
+  text-align: center;
 }
 
 .sticky-col {
@@ -538,6 +571,16 @@ button {
   background: #f6f9ff;
 }
 
+.row-problem td,
+.row-problem .sticky-col {
+  background: #fff1f1;
+}
+
+.row-problem.row-selected td,
+.row-problem.row-selected .sticky-col {
+  background: #ffe7e7;
+}
+
 .row-highlighted td,
 .row-highlighted .sticky-col {
   animation: rowFlash 3s ease;
@@ -559,6 +602,14 @@ button {
   font-weight: 700;
 }
 
+.read-only-cell {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  color: #334155;
+}
+
+.read-only-strong,
 .emphasis-cell .input-reset {
   font-weight: 700;
   color: #0f172a;
@@ -583,6 +634,30 @@ button {
 
 .wide-cell {
   min-width: 118px;
+}
+
+.problem-toggle {
+  width: 30px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #cbd8ea;
+  border-radius: 7px;
+  background: #fff;
+  color: #b42318;
+  font-weight: 900;
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+.problem-toggle-active {
+  border-color: #ef9a9a;
+  background: #d92d20;
+  color: #fff;
+}
+
+.problem-toggle:hover {
+  border-color: #d92d20;
 }
 
 .empty-table-cell {
@@ -746,6 +821,33 @@ button {
   animation: cardFlash 3s ease;
 }
 
+.mobile-card-problem {
+  border-color: #ef9a9a;
+  background: #fff7f7;
+}
+
+.mobile-problem-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin: 12px 0;
+}
+
+.mobile-problem-toggle {
+  width: 100%;
+  height: 42px;
+  display: grid;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.mobile-problem-toggle span,
+.modal-problem-toggle small {
+  font-size: 0.56rem;
+  font-weight: 800;
+  color: inherit;
+}
+
 .nfc-panel {
   display: grid;
   gap: 16px;
@@ -905,6 +1007,30 @@ button {
   gap: 12px;
 }
 
+.nfc-problem-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.nfc-problem-picker > span {
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.problem-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.modal-problem-toggle {
+  width: 100%;
+  height: 48px;
+  display: grid;
+  gap: 2px;
+}
+
 .modal-wide-field {
   grid-column: span 3;
 }
@@ -1006,6 +1132,7 @@ button {
 
   .nfc-meta-grid,
   .modal-grid,
+  .problem-picker-grid,
   .associate-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1074,7 +1201,8 @@ button {
   }
 
   .nfc-meta-grid,
-  .nfc-bus-strip {
+  .nfc-bus-strip,
+  .mobile-problem-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1108,6 +1236,7 @@ button {
   .loading-grid,
   .nfc-meta-grid,
   .nfc-bus-strip,
+  .problem-picker-grid,
   .modal-grid,
   .associate-grid {
     grid-template-columns: 1fr;

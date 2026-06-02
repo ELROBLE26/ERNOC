@@ -1,12 +1,5 @@
-export const TERMINAL_OPTIONS = ['Todos', 'El Roble', 'La Reina'];
-export const OPER_OPTIONS = ['Todos', 'OK', 'NO', 'PENDIENTE'];
-export const VIDRIO_OPTIONS = ['OK', 'DAÑADO', 'PENDIENTE', 'NO APLICA'];
-export const MANT_OPTIONS = ['OK', 'MANTENCIÓN', 'PENDIENTE'];
-export const CALIDAD_OPTIONS = ['OK', 'OBSERVADO', 'PENDIENTE'];
-export const ADQ_OPTIONS = ['OK', 'PENDIENTE', 'NO APLICA'];
-export const AFT_OPTIONS = ['OK', 'PENDIENTE', 'NO APLICA'];
-export const SINIES_OPTIONS = ['NO', 'SI', 'PENDIENTE'];
 export const ESTADO_OPTIONS = ['OPERATIVO', 'NO OPERATIVO', 'EN PANNE', 'EN MANTENCIÓN', 'OBSERVADO', 'PENDIENTE'];
+export const PROBLEM_FIELDS = ['oper', 'vidrio', 'mant', 'calidad', 'adq', 'aft', 'sinies'];
 
 export const FILTER_DEFAULTS = {
   terminal: 'Todos',
@@ -24,15 +17,15 @@ export const CREATE_DEFAULTS = {
   modelo: '',
   asignacion: '',
   tipo: 'RIGIDO',
-  estado: 'PENDIENTE',
+  estado: 'OPERATIVO',
   ubicacion: '',
-  oper: 'PENDIENTE',
-  vidrio: 'PENDIENTE',
-  mant: 'PENDIENTE',
-  calidad: 'PENDIENTE',
-  adq: 'PENDIENTE',
-  aft: 'PENDIENTE',
-  sinies: 'NO',
+  oper: '',
+  vidrio: '',
+  mant: '',
+  calidad: '',
+  adq: '',
+  aft: '',
+  sinies: '',
   detalle_panne: '',
   observaciones: '',
 };
@@ -92,7 +85,11 @@ export function applyFleetFilters(rows, filters) {
       return false;
     }
 
-    if (filters.operatividad !== 'Todos' && normalizeText(row.oper) !== filters.operatividad) {
+    if (filters.operatividad === 'Con problema' && !hasProblemX(row)) {
+      return false;
+    }
+
+    if (filters.operatividad === 'Sin problema' && hasProblemX(row)) {
       return false;
     }
 
@@ -107,15 +104,15 @@ export function applyFleetFilters(rows, filters) {
 export function computeCounters(rows) {
   const total = rows.length;
   const operativos = rows.filter((row) => isOperative(row)).length;
-  const noOperativos = rows.filter((row) => isNonOperative(row)).length;
-  const enMantencion = rows.filter((row) => matchesAny(row.estado, ['EN MANTENCIÓN']) || matchesAny(row.mant, ['MANTENCIÓN'])).length;
-  const observados = rows.filter((row) => matchesAny(row.estado, ['OBSERVADO']) || matchesAny(row.calidad, ['OBSERVADO'])).length;
-  const conPanne = rows.filter((row) => matchesAny(row.estado, ['EN PANNE']) || normalizeText(row.detalle_panne)).length;
-  const problemaVidrio = rows.filter((row) => matchesAny(row.vidrio, ['DAÑADO'])).length;
-  const problemaCalidad = rows.filter((row) => matchesAny(row.calidad, ['OBSERVADO'])).length;
-  const conAdq = rows.filter((row) => matchesAny(row.adq, ['PENDIENTE'])).length;
-  const conAft = rows.filter((row) => matchesAny(row.aft, ['PENDIENTE'])).length;
-  const conSiniestro = rows.filter((row) => matchesAny(row.sinies, ['SI'])).length;
+  const noOperativos = rows.filter((row) => isNonOperative(row) || hasProblemX(row)).length;
+  const enMantencion = rows.filter((row) => matchesAny(row.estado, ['EN MANTENCIÓN']) || matchesAny(row.mant, ['MANTENCIÓN', 'X'])).length;
+  const observados = rows.filter((row) => matchesAny(row.estado, ['OBSERVADO']) || matchesAny(row.calidad, ['OBSERVADO', 'X'])).length;
+  const conPanne = rows.filter((row) => matchesAny(row.estado, ['EN PANNE']) || normalizeText(row.detalle_panne) || hasProblemX(row)).length;
+  const problemaVidrio = rows.filter((row) => matchesAny(row.vidrio, ['DAÑADO', 'X'])).length;
+  const problemaCalidad = rows.filter((row) => matchesAny(row.calidad, ['OBSERVADO', 'X'])).length;
+  const conAdq = rows.filter((row) => matchesAny(row.adq, ['PENDIENTE', 'X'])).length;
+  const conAft = rows.filter((row) => matchesAny(row.aft, ['PENDIENTE', 'X'])).length;
+  const conSiniestro = rows.filter((row) => matchesAny(row.sinies, ['SI', 'X'])).length;
   const totalElRoble = rows.filter((row) => row.terminal === 'El Roble').length;
   const totalLaReina = rows.filter((row) => row.terminal === 'La Reina').length;
   const porcentajeOperatividad = total ? Math.round((operativos / total) * 100) : 0;
@@ -157,6 +154,22 @@ export function getStatusTone(status) {
     default:
       return 'muted';
   }
+}
+
+export function hasProblemX(row) {
+  return PROBLEM_FIELDS.some((field) => normalizeText(row[field]).toUpperCase() === 'X');
+}
+
+export function buildExclusiveProblemPatch(problemField) {
+  const patch = PROBLEM_FIELDS.reduce((current, field) => {
+    current[field] = field === problemField ? 'X' : '';
+    return current;
+  }, {});
+
+  return {
+    ...patch,
+    estado: problemField ? 'NO OPERATIVO' : 'OPERATIVO',
+  };
 }
 
 export function buildCsv(rows) {
@@ -292,11 +305,11 @@ export function formatSaveStatus(status) {
 }
 
 function isOperative(row) {
-  return matchesAny(row.estado, ['OPERATIVO']) || matchesAny(row.oper, ['OK']);
+  return matchesAny(row.estado, ['OPERATIVO']) && !hasProblemX(row);
 }
 
 function isNonOperative(row) {
-  return matchesAny(row.estado, ['NO OPERATIVO']) || matchesAny(row.oper, ['NO']);
+  return matchesAny(row.estado, ['NO OPERATIVO']) || hasProblemX(row);
 }
 
 function matchesAny(value, expectedValues) {
