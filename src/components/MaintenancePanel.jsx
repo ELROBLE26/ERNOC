@@ -43,7 +43,7 @@ export function MaintenancePanel({ schedule, lastUploadDate, onParseFile, onClea
       </div>
 
       <div className="configuration-grid" style={{ gridTemplateColumns: '1fr' }}>
-        <section className="panel nfc-panel" style={{ maxWidth: '600px' }}>
+        <section className="panel nfc-panel" style={{ maxWidth: '800px' }}>
           <div className="nfc-panel-main">
             <div>
               <div className="panel-title-row">
@@ -110,6 +110,43 @@ export function MaintenancePanel({ schedule, lastUploadDate, onParseFile, onClea
             />
           </div>
         </section>
+
+        {schedule.length > 0 && (
+          <section className="panel" style={{ maxWidth: '800px', overflowX: 'auto' }}>
+            <div className="panel-title-row" style={{ marginBottom: '16px', padding: '0 8px' }}>
+              <div>
+                <h2>Detalle de Buses Programados</h2>
+                <p className="panel-subtitle">Lista de buses leídos desde el archivo Excel</p>
+              </div>
+            </div>
+            <table className="data-table" style={{ fontSize: '13px' }}>
+              <thead>
+                <tr>
+                  <th>TURNO</th>
+                  <th>COD</th>
+                  <th>PPU</th>
+                  <th>TERMINAL</th>
+                  <th>DETALLE MANTENIMIENTO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedule.map((row, idx) => (
+                  <tr key={`${row.cod}-${idx}`}>
+                    <td>
+                      <span className={`status-pill ${row.turno.includes('noche') ? 'status-pill-purple' : 'status-pill-blue'}`} style={{ padding: '2px 6px', fontSize: '11px', borderRadius: '4px' }}>
+                        {row.turno}
+                      </span>
+                    </td>
+                    <td><strong>{row.cod}</strong></td>
+                    <td style={{ fontFamily: 'monospace' }}>{row.ppu}</td>
+                    <td>{row.terminal}</td>
+                    <td>{row.detalle || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
       </div>
     </section>
   );

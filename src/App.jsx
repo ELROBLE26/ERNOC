@@ -141,8 +141,31 @@ function App() {
       setScheduledMaintenance(maintenanceMatch || null);
       setCurrentNfcBus(bus);
       setLastNfcBus(bus);
-      setNfcOperOpen(true);
-      setNfcMessage('Bus encontrado.');
+
+      if (maintenanceMatch) {
+        // Auto-registro
+        setNfcMessage(`¡Alerta! Bus programado para ${maintenanceMatch.turno}. Registrando automáticamente...`);
+        const operationPayload = {
+          terminal: terminalName,
+          estado: 'NO OPERATIVO',
+          oper: '',
+          vidrio: '',
+          mant: 'X',
+          calidad: '',
+          adq: '',
+          aft: '',
+          sinies: '',
+          detalle_panne: maintenanceMatch.detalle,
+          observaciones: maintenanceMatch.turno,
+          ubicacion: terminalName,
+        };
+        await executeNfcSave(bus, nfcUid, operationPayload);
+        // Set success message after save
+        setNfcMessage(`✅ ${maintenanceMatch.turno} registrada automáticamente para el bus ${bus.cod}.`);
+      } else {
+        setNfcOperOpen(true);
+        setNfcMessage('Bus encontrado.');
+      }
     } catch (readError) {
       const message = readError.message || 'No fue posible procesar la lectura NFC.';
       setNfcError(message);
@@ -207,8 +230,8 @@ function App() {
     return result;
   };
 
-  const handleNfcSave = async (operation) => {
-    if (!currentNfcBus?.cod || !currentNfcBus?.ppu) {
+  const executeNfcSave = async (targetBus, targetUid, operation) => {
+    if (!targetBus?.cod || !targetBus?.ppu) {
       setNfcError('No se puede guardar sin COD y PPU.');
       return;
     }
@@ -228,10 +251,10 @@ function App() {
     setNfcError('');
 
     try {
-      const updatedBus = await updateFleetFromNfc(currentNfcBus, normalizedOperation);
+      const updatedBus = await updateFleetFromNfc(targetBus, normalizedOperation);
       await insertNfcLog(
         buildNfcLogPayload({
-          nfcUid: currentNfcUid,
+          nfcUid: targetUid,
           bus: updatedBus,
           operation: normalizedOperation,
           resultado: 'guardado',
@@ -251,8 +274,8 @@ function App() {
       setNfcMessage(message);
       await insertNfcLog(
         buildNfcLogPayload({
-          nfcUid: currentNfcUid,
-          bus: currentNfcBus,
+          nfcUid: targetUid,
+          bus: targetBus,
           operation: normalizedOperation,
           resultado: 'error',
           mensajeError: message,
@@ -261,6 +284,10 @@ function App() {
     } finally {
       setNfcSaving(false);
     }
+  };
+
+  const handleNfcSave = async (operation) => {
+    await executeNfcSave(currentNfcBus, currentNfcUid, operation);
   };
 
   const handleNfcAssociationSearch = async (searchValue) => {
