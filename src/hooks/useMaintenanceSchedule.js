@@ -39,32 +39,39 @@ export function useMaintenanceSchedule() {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
+          const parsedData = [];
 
-          const jsonRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          
-          let headerRowIndex = -1;
-          for (let i = 0; i < Math.min(20, jsonRaw.length); i++) {
-            const row = jsonRaw[i];
-            if (!row) continue;
-            const rowStr = row.join(' ').toLowerCase();
-            if ((rowStr.includes('interno') || rowStr.includes('bus')) && rowStr.includes('ppu')) {
-              headerRowIndex = i;
-              break;
+          for (const sheetName of workbook.SheetNames) {
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            let headerRowIndex = -1;
+            for (let i = 0; i < Math.min(20, jsonRaw.length); i++) {
+              const row = jsonRaw[i];
+              if (!row) continue;
+              const rowStr = row.join(' ').toLowerCase();
+              if ((rowStr.includes('interno') || rowStr.includes('bus')) && rowStr.includes('ppu')) {
+                headerRowIndex = i;
+                break;
+              }
+            }
+
+            if (headerRowIndex !== -1) {
+              const sheetData = XLSX.utils.sheet_to_json(worksheet, { 
+                range: headerRowIndex,
+                raw: true
+              });
+              parsedData.push(...sheetData);
             }
           }
 
-          if (headerRowIndex === -1) {
-            throw new Error('No se encontraron las columnas esperadas (N° interno, PPU, etc). Revisa el formato del archivo.');
+          if (parsedData.length === 0) {
+            throw new Error('No se encontraron las columnas esperadas (N° interno, PPU, etc) en ninguna hoja.');
           }
 
-          const parsedData = XLSX.utils.sheet_to_json(worksheet, { 
-            range: headerRowIndex,
-            raw: true
-          });
-
           const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -72,6 +79,8 @@ export function useMaintenanceSchedule() {
             d1.getDate() === d2.getDate() && 
             d1.getMonth() === d2.getMonth() && 
             d1.getFullYear() === d2.getFullYear();
+
+          const isRelevantDate = (d) => isSameDay(d, today) || isSameDay(d, tomorrow) || isSameDay(d, yesterday);
 
           const parseDateValue = (val) => {
             if (!val) return null;
@@ -94,14 +103,14 @@ export function useMaintenanceSchedule() {
           };
 
           // Recolectar todas las fechas válidas para inferir cuál es "Día" y cuál "Noche"
-          // La fecha menor será Noche, la mayor será Día (según el formato de sus planillas)
+          // Solo nos importan las fechas cercanas (ayer, hoy, mañana) para no arrastrar datos históricos
           const validDates = [];
           for (const row of parsedData) {
             const keys = Object.keys(row);
             const fechaKey = keys.find(k => k.toLowerCase().includes('fecha programada de ingreso') || k.toLowerCase().includes('fecha ingreso'));
             if (fechaKey && row[fechaKey]) {
               const d = parseDateValue(row[fechaKey]);
-              if (d && !validDates.some(vd => isSameDay(vd, d))) {
+              if (d && isRelevantDate(d) && !validDates.some(vd => isSameDay(vd, d))) {
                 validDates.push(d);
               }
             }
@@ -129,12 +138,16 @@ export function useMaintenanceSchedule() {
 
             if (!codRaw || !ppuRaw) continue;
 
+            const parsedDate = parseDateValue(fechaRaw);
+            
+            // Ignorar filas antiguas o futuras que no correspondan a la ventana operativa
+            if (!parsedDate || !isRelevantDate(parsedDate)) continue;
+
             const cod = codRaw.toString().trim();
             const ppu = ppuRaw.toString().trim();
             const taller = tallerRaw?.toString().trim() || '';
             const detalle = detalleRaw?.toString().trim() || '';
             
-            const parsedDate = parseDateValue(fechaRaw);
             let tipoTurno = null;
             
             if (parsedDate && dateNoche) {
