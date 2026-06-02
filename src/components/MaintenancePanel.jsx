@@ -112,39 +112,39 @@ export function MaintenancePanel({ schedule, lastUploadDate, onParseFile, onClea
         </section>
 
         {schedule.length > 0 && (
-          <section className="panel" style={{ maxWidth: '800px', overflowX: 'auto' }}>
-            <div className="panel-title-row" style={{ marginBottom: '16px', padding: '0 8px' }}>
-              <div>
-                <h2>Detalle de Buses Programados</h2>
-                <p className="panel-subtitle">Lista de buses leídos desde el archivo Excel</p>
-              </div>
+          <section className="table-panel" style={{ maxWidth: '1000px', width: '100%' }}>
+            <div className="table-panel-header">
+              <h2>Detalle de Buses Programados</h2>
+              <p>Lista de buses leídos desde el archivo Excel. Estos buses se auto-registrarán al ser detectados por NFC.</p>
             </div>
-            <table className="data-table" style={{ fontSize: '13px' }}>
-              <thead>
-                <tr>
-                  <th>TURNO</th>
-                  <th>COD</th>
-                  <th>PPU</th>
-                  <th>TERMINAL</th>
-                  <th>DETALLE MANTENIMIENTO</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schedule.map((row, idx) => (
-                  <tr key={`${row.cod}-${idx}`}>
-                    <td>
-                      <span className={`status-pill ${row.turno.includes('noche') ? 'status-pill-purple' : 'status-pill-blue'}`} style={{ padding: '2px 6px', fontSize: '11px', borderRadius: '4px' }}>
-                        {row.turno}
-                      </span>
-                    </td>
-                    <td><strong>{row.cod}</strong></td>
-                    <td style={{ fontFamily: 'monospace' }}>{row.ppu}</td>
-                    <td>{row.terminal}</td>
-                    <td>{row.detalle || '—'}</td>
+            <div className="table-scroll">
+              <table className="fleet-table">
+                <thead>
+                  <tr>
+                    <th style={{ minWidth: '130px' }}>TURNO</th>
+                    <th style={{ width: '80px' }}>COD</th>
+                    <th style={{ width: '100px' }}>PPU</th>
+                    <th style={{ width: '120px' }}>TERMINAL</th>
+                    <th>DETALLE MANTENIMIENTO</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {schedule.map((row, idx) => (
+                    <tr key={`${row.cod}-${idx}`}>
+                      <td>
+                        <span className={`status-pill ${row.turno.includes('noche') ? 'status-pill-purple' : 'status-pill-blue'}`}>
+                          {row.turno}
+                        </span>
+                      </td>
+                      <td><strong>{row.cod}</strong></td>
+                      <td style={{ fontFamily: 'monospace' }}>{row.ppu}</td>
+                      <td>{row.terminal}</td>
+                      <td style={{ color: 'var(--gray-600)' }}>{row.detalle || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         )}
       </div>
