@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Building2, Menu, ShieldCheck, X } from 'lucide-react';
+import { Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -24,6 +24,7 @@ import {
   ESTADO_OPTIONS,
   applyFleetFilters,
   computeCounters,
+  downloadCsv,
   getFieldOptions,
 } from './utils/fleet';
 
@@ -336,66 +337,74 @@ function App() {
     <main className="app-shell">
       <div className={`layout-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <aside className="enterprise-sidebar">
+          <div className="sidebar-top-bar" />
           <div className="brand-block">
             <div className="brand-icon">
-              <Building2 size={18} />
+              <Building2 size={16} />
             </div>
-            <div>
+            <div className="brand-text">
               <strong>Turno Ernoc</strong>
-              <p>Control Empresarial</p>
+              <span>Centro Operativo</span>
             </div>
           </div>
           <nav className="sidebar-nav">
+            <span className="sidebar-section-label">Módulos</span>
             <button
               type="button"
+              id="nav-operacion"
               className={`sidebar-link ${activeView === 'operacion' ? 'sidebar-link-active' : ''}`}
               onClick={() => {
                 setActiveView('operacion');
                 setSidebarOpen(false);
               }}
             >
-              Operacion Flota
+              <span className="sidebar-link-icon"><LayoutGrid size={14} /></span>
+              Operación Flota
             </button>
             <button
               type="button"
+              id="nav-configuracion"
               className={`sidebar-link ${activeView === 'configuracion' ? 'sidebar-link-active' : ''}`}
               onClick={() => {
                 setActiveView('configuracion');
                 setSidebarOpen(false);
               }}
             >
-              Configuracion
+              <span className="sidebar-link-icon"><Settings size={14} /></span>
+              Configuración
             </button>
           </nav>
           <div className="sidebar-foot">
             <span className="sidebar-status-pill">
-              <ShieldCheck size={14} />
-              Sistema protegido
+              <span className="sidebar-status-dot" />
+              {isSupabaseConfigured ? 'Supabase conectado' : 'Sin configurar'}
             </span>
           </div>
         </aside>
 
         <section className="app-container">
           <header className="enterprise-header">
+            <div className="header-accent-bar" />
             <div className="enterprise-header-top">
               <div className="enterprise-header-main">
                 <button
                   type="button"
                   className="menu-toggle"
                   onClick={() => setSidebarOpen((current) => !current)}
-                  aria-label="Abrir o cerrar menu"
+                  aria-label="Abrir o cerrar menú"
                 >
-                  {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+                  {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
                 </button>
-                <div>
+                <div className="header-title-group">
                   <h1>Centro Operativo</h1>
-                  <p>Gestion diaria de flota, lectura NFC y control de disponibilidad.</p>
+                  <p>Gestión diaria de flota · Lectura NFC · Control de disponibilidad</p>
                 </div>
               </div>
               <div className="enterprise-header-meta">
-                <label className="work-terminal-control">
-                  <span>Terminal trabajo</span>
+                <div className="work-terminal-control">
+                  <label htmlFor="terminal-select">Terminal</label>
                   <select
+                    id="terminal-select"
                     value={workTerminal}
                     onChange={(event) => {
                       const terminal = event.target.value;
@@ -409,9 +418,31 @@ function App() {
                     <option value="El Roble">El Roble</option>
                     <option value="La Reina">La Reina</option>
                   </select>
-                </label>
-                <span>{new Date().toLocaleDateString('es-CL')}</span>
-                <strong>{filteredRows.length} buses</strong>
+                </div>
+                <span className="header-meta-badge">
+                  {new Date().toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' })}
+                </span>
+                <span className="header-meta-badge badge-count">
+                  {filteredRows.length} buses
+                </span>
+                {nfcActive && (
+                  <span className="header-meta-badge badge-live">
+                    <Radio size={10} />
+                    NFC activo
+                  </span>
+                )}
+                {activeView === 'operacion' && filteredRows.length > 0 && (
+                  <button
+                    id="btn-export-csv"
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => downloadCsv(filteredRows)}
+                    title="Exportar tabla a CSV"
+                  >
+                    <Download size={13} />
+                    CSV
+                  </button>
+                )}
               </div>
             </div>
           </header>

@@ -18,10 +18,7 @@ export function InlineField({
   }, [value]);
 
   const commit = async (nextValue) => {
-    if (nextValue === (value ?? '')) {
-      return;
-    }
-
+    if (nextValue === (value ?? '')) return;
     const result = await onSave(nextValue);
     setError(result?.ok === false ? result.message : '');
   };
@@ -39,9 +36,7 @@ export function InlineField({
           }}
         >
           {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
+            <option key={option} value={option}>{option}</option>
           ))}
         </select>
         {error ? <span className="cell-error">{error}</span> : null}
@@ -88,6 +83,8 @@ export function SaveIndicator({ state }) {
   const status = state?.status ?? 'idle';
   const message = state?.message ?? '';
 
+  if (status === 'idle') return null;
+
   return (
     <div className={`save-indicator save-${status}`}>
       <span>{formatSaveStatus(status)}</span>
@@ -95,4 +92,3 @@ export function SaveIndicator({ state }) {
     </div>
   );
 }
-
