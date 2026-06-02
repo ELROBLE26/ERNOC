@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download } from 'lucide-react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -7,8 +7,10 @@ import { MobileFleetCards } from './components/MobileFleetCards';
 import { NfcNotRegisteredModal } from './components/NfcNotRegisteredModal';
 import { NfcOperModal } from './components/NfcOperModal';
 import { OperationsSummary } from './components/OperationsSummary';
+import { MaintenancePanel } from './components/MaintenancePanel';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
+import { useMaintenanceSchedule } from './hooks/useMaintenanceSchedule';
 import { isSupabaseConfigured } from './lib/supabase';
 import {
   buildNfcLogPayload,
@@ -40,6 +42,9 @@ function App() {
   } = useFleetData();
   const [filters, setFilters] = useState(FILTER_DEFAULTS);
   const [workTerminal, setWorkTerminal] = useState('El Roble');
+  
+  const { schedule, lastUploadDate, parseFile, clearSchedule } = useMaintenanceSchedule();
+  
   const [selectedRowId, setSelectedRowId] = useState('');
   const [formBusy, setFormBusy] = useState(false);
   const [nfcActive, setNfcActive] = useState(true);
@@ -58,6 +63,7 @@ function App() {
   const [highlightedRowId, setHighlightedRowId] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('operacion');
+  const [scheduledMaintenance, setScheduledMaintenance] = useState(null);
 
   const filteredRows = useMemo(() => applyFleetFilters(rows, filters), [rows, filters]);
   const counters = useMemo(() => computeCounters(filteredRows), [filteredRows]);
@@ -98,6 +104,7 @@ function App() {
     setCurrentNfcUid(nfcUid);
     setCurrentNfcBus(null);
     setFoundAssociationBus(null);
+    setScheduledMaintenance(null);
 
     try {
       const card = await findNfcCard(nfcUid);
@@ -126,6 +133,12 @@ function App() {
         return;
       }
 
+      const terminalName = card.terminal_default || bus.terminal;
+      const maintenanceMatch = schedule.find(
+        (s) => (s.cod === bus.cod || s.ppu === bus.ppu) && s.terminal === terminalName
+      );
+      
+      setScheduledMaintenance(maintenanceMatch || null);
       setCurrentNfcBus(bus);
       setLastNfcBus(bus);
       setNfcOperOpen(true);
@@ -363,6 +376,18 @@ function App() {
             </button>
             <button
               type="button"
+              id="nav-mantenciones"
+              className={`sidebar-link ${activeView === 'mantenciones' ? 'sidebar-link-active' : ''}`}
+              onClick={() => {
+                setActiveView('mantenciones');
+                setSidebarOpen(false);
+              }}
+            >
+              <span className="sidebar-link-icon"><CalendarClock size={14} /></span>
+              Mantenciones
+            </button>
+            <button
+              type="button"
               id="nav-configuracion"
               className={`sidebar-link ${activeView === 'configuracion' ? 'sidebar-link-active' : ''}`}
               onClick={() => {
@@ -494,7 +519,7 @@ function App() {
                 </>
               )}
             </>
-          ) : (
+          ) : activeView === 'configuracion' ? (
             <ConfigurationPanel
               nfcProps={{
                 active: nfcActive,
@@ -531,13 +556,21 @@ function App() {
                 onClearCapturedNfc: () => setNewBusCapturedNfcUid(''),
               }}
             />
-          )}
+          ) : activeView === 'mantenciones' ? (
+            <MaintenancePanel 
+              schedule={schedule}
+              lastUploadDate={lastUploadDate}
+              onParseFile={parseFile}
+              onClear={clearSchedule}
+            />
+          ) : null}
 
           <NfcOperModal
             open={nfcOperOpen}
             nfcUid={currentNfcUid}
             bus={currentNfcBus}
             terminalFilter={workTerminal}
+            scheduledMaintenance={scheduledMaintenance}
             saving={nfcSaving}
             error={nfcError}
             onSave={handleNfcSave}

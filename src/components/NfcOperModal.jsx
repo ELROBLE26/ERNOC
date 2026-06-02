@@ -17,19 +17,20 @@ export function NfcOperModal({
   nfcUid,
   bus,
   terminalFilter,
+  scheduledMaintenance,
   saving,
   error,
   onSave,
   onCancel,
 }) {
   const defaultTerminal = terminalFilter;
-  const [form, setForm] = useState(() => buildInitialForm(defaultTerminal));
+  const [form, setForm] = useState(() => buildInitialForm(defaultTerminal, scheduledMaintenance));
 
   useEffect(() => {
     if (open) {
-      setForm(buildInitialForm(defaultTerminal));
+      setForm(buildInitialForm(defaultTerminal, scheduledMaintenance));
     }
-  }, [defaultTerminal, open, nfcUid]);
+  }, [defaultTerminal, open, nfcUid, scheduledMaintenance]);
 
   const selectedProblem = PROBLEM_FIELDS.find((field) => String(form[field] ?? '').toUpperCase() === 'X');
   const showDetails = Boolean(selectedProblem);
@@ -98,8 +99,13 @@ export function NfcOperModal({
         aria-modal="true"
         aria-labelledby="nfc-oper-title"
       >
-        <div className="modal-accent-bar" />
+        <div className={`modal-accent-bar ${scheduledMaintenance ? 'maintenance-accent-bar' : ''}`} style={scheduledMaintenance ? { background: 'var(--warning-500)' } : {}} />
         <div className="modal-content">
+          {scheduledMaintenance && (
+            <div className="banner banner-warning" style={{ marginBottom: 16 }}>
+              <strong>¡Bus programado!</strong> {scheduledMaintenance.turno} — {scheduledMaintenance.detalle}
+            </div>
+          )}
           <div className="modal-header">
             <div>
               <h2 id="nfc-oper-title">Lectura NFC detectada</h2>
@@ -188,7 +194,24 @@ export function NfcOperModal({
   );
 }
 
-function buildInitialForm(terminal) {
+function buildInitialForm(terminal, scheduledMaintenance) {
+  if (scheduledMaintenance) {
+    return {
+      terminal,
+      estado: 'NO OPERATIVO',
+      oper: '',
+      vidrio: '',
+      mant: 'X',
+      calidad: '',
+      adq: '',
+      aft: '',
+      sinies: '',
+      detalle_panne: scheduledMaintenance.detalle,
+      observaciones: scheduledMaintenance.turno,
+      ubicacion: terminal,
+    };
+  }
+
   return {
     terminal,
     estado: 'OPERATIVO',
