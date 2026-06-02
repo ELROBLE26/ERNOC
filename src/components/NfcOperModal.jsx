@@ -25,10 +25,12 @@ export function NfcOperModal({
 }) {
   const defaultTerminal = terminalFilter;
   const [form, setForm] = useState(() => buildInitialForm(defaultTerminal, scheduledMaintenance));
+  const [otNumber, setOtNumber] = useState('');
 
   useEffect(() => {
     if (open) {
       setForm(buildInitialForm(defaultTerminal, scheduledMaintenance));
+      setOtNumber('');
     }
   }, [defaultTerminal, open, nfcUid, scheduledMaintenance]);
 
@@ -46,11 +48,19 @@ export function NfcOperModal({
       };
     }
 
+    let finalObservaciones = form.observaciones;
+    if (otNumber.trim()) {
+      finalObservaciones = finalObservaciones 
+        ? `${finalObservaciones} (OT: ${otNumber.trim()})`
+        : `OT: ${otNumber.trim()}`;
+    }
+
     return {
       ...form,
+      observaciones: finalObservaciones,
       estado: 'NO OPERATIVO',
     };
-  }, [form]);
+  }, [form, otNumber]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -151,6 +161,11 @@ export function NfcOperModal({
 
             {showDetails ? (
               <>
+                <TextInput
+                  label="Número de OT (Opcional)"
+                  value={otNumber}
+                  onChange={setOtNumber}
+                />
                 <TextArea
                   label="Detalle Panne"
                   value={form.detalle_panne}
@@ -206,7 +221,7 @@ function buildInitialForm(terminal, scheduledMaintenance) {
       adq: '',
       aft: '',
       sinies: '',
-      detalle_panne: scheduledMaintenance.detalle,
+      detalle_panne: 'PREVENTIVA',
       observaciones: scheduledMaintenance.turno,
       ubicacion: terminal,
     };
@@ -245,6 +260,20 @@ function TextArea({ label, value, onChange }) {
         value={value}
         rows={3}
         onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function TextInput({ label, value, onChange }) {
+  return (
+    <label className="field modal-wide-field">
+      <span>{label}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Ej: 12345"
       />
     </label>
   );

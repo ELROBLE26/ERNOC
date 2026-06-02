@@ -141,29 +141,11 @@ function App() {
       setScheduledMaintenance(maintenanceMatch || null);
       setCurrentNfcBus(bus);
       setLastNfcBus(bus);
-
+      setNfcOperOpen(true);
+      
       if (maintenanceMatch) {
-        // Auto-registro
-        setNfcMessage(`¡Alerta! Bus programado para ${maintenanceMatch.turno}. Registrando automáticamente...`);
-        const operationPayload = {
-          terminal: terminalName,
-          estado: 'NO OPERATIVO',
-          oper: '',
-          vidrio: '',
-          mant: 'X',
-          calidad: '',
-          adq: '',
-          aft: '',
-          sinies: '',
-          detalle_panne: maintenanceMatch.detalle,
-          observaciones: maintenanceMatch.turno,
-          ubicacion: terminalName,
-        };
-        await executeNfcSave(bus, nfcUid, operationPayload);
-        // Set success message after save
-        setNfcMessage(`✅ ${maintenanceMatch.turno} registrada automáticamente para el bus ${bus.cod}.`);
+        setNfcMessage(`¡Alerta! Bus programado para ${maintenanceMatch.turno}. Verifique y guarde.`);
       } else {
-        setNfcOperOpen(true);
         setNfcMessage('Bus encontrado.');
       }
     } catch (readError) {
