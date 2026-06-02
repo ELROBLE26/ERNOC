@@ -52,6 +52,8 @@ function App() {
   const [foundAssociationBus, setFoundAssociationBus] = useState(null);
   const [nfcOperOpen, setNfcOperOpen] = useState(false);
   const [nfcNotRegisteredOpen, setNfcNotRegisteredOpen] = useState(false);
+  const [newBusNfcScanArmed, setNewBusNfcScanArmed] = useState(false);
+  const [newBusCapturedNfcUid, setNewBusCapturedNfcUid] = useState('');
   const [highlightedRowId, setHighlightedRowId] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('operacion');
@@ -74,6 +76,13 @@ function App() {
   );
 
   const handleNfcRead = async (nfcUid, source = 'keyboard') => {
+    if (newBusNfcScanArmed && activeView === 'configuracion') {
+      setNewBusCapturedNfcUid(nfcUid);
+      setNewBusNfcScanArmed(false);
+      setNfcMessage(`Codigo NFC capturado para nuevo bus: ${nfcUid}`);
+      return;
+    }
+
     if (!isSupabaseConfigured) {
       setNfcMessage('Configura Supabase antes de usar NFC.');
       return;
@@ -149,7 +158,28 @@ function App() {
 
   const handleCreate = async (payload) => {
     setFormBusy(true);
-    const result = await addBus(payload);
+    const { nfc_uid: nfcUid, ...busPayload } = payload;
+    const result = await addBus(busPayload);
+
+    if (result.ok && nfcUid) {
+      try {
+        await createNfcAssociation({
+          nfc_uid: nfcUid,
+          cod: busPayload.cod,
+          ppu: busPayload.ppu,
+          terminal_default: busPayload.terminal,
+          observacion: 'Asociado al crear bus desde Configuracion',
+        });
+        setNfcMessage(`Tarjeta NFC ${nfcUid} asociada al bus ${busPayload.cod}.`);
+      } catch (associateError) {
+        setFormBusy(false);
+        return {
+          ok: false,
+          message: associateError.message || 'El bus fue creado, pero no se pudo asociar la tarjeta NFC.',
+        };
+      }
+    }
+
     setFormBusy(false);
 
     if (!result.ok) {
@@ -433,6 +463,14 @@ function App() {
                 visible: true,
                 onSubmit: handleCreate,
                 busy: formBusy,
+                capturedNfcUid: newBusCapturedNfcUid,
+                nfcScanArmed: newBusNfcScanArmed,
+                onArmNfcScan: () => {
+                  setNfcActive(true);
+                  setNewBusNfcScanArmed(true);
+                  setNfcMessage('Escaneo NFC armado para nuevo bus.');
+                },
+                onClearCapturedNfc: () => setNewBusCapturedNfcUid(''),
               }}
             />
           )}

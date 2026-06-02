@@ -1,16 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { ScanLine } from 'lucide-react';
 import { CREATE_DEFAULTS } from '../utils/fleet';
 
-export function NewBusForm({ visible, onSubmit, busy = false }) {
+export function NewBusForm({
+  visible,
+  onSubmit,
+  busy = false,
+  capturedNfcUid = '',
+  nfcScanArmed = false,
+  onArmNfcScan,
+  onClearCapturedNfc,
+}) {
+  const nfcInputRef = useRef(null);
   const [form, setForm] = useState({
     cod: '',
     ppu: '',
+    nfc_uid: '',
     numero: '',
     modelo: '',
     asignacion: '',
     ...CREATE_DEFAULTS,
   });
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!capturedNfcUid) {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      nfc_uid: capturedNfcUid,
+    }));
+    setMessage('Codigo NFC capturado desde la tarjeta.');
+    onClearCapturedNfc?.();
+  }, [capturedNfcUid, onClearCapturedNfc]);
 
   if (!visible) {
     return null;
@@ -36,6 +60,7 @@ export function NewBusForm({ visible, onSubmit, busy = false }) {
     setForm({
       cod: '',
       ppu: '',
+      nfc_uid: '',
       numero: '',
       modelo: '',
       asignacion: '',
@@ -57,8 +82,38 @@ export function NewBusForm({ visible, onSubmit, busy = false }) {
       </div>
 
       <form className="create-grid" onSubmit={handleSubmit}>
-        <FormField label="Codigo" value={form.cod} onChange={(value) => handleChange('cod', value)} required />
+        <FormField label="Codigo bus" value={form.cod} onChange={(value) => handleChange('cod', value)} required />
         <FormField label="PPU" value={form.ppu} onChange={(value) => handleChange('ppu', value)} required />
+        <label className={`field nfc-code-field ${nfcScanArmed ? 'nfc-code-field-active' : ''}`}>
+          <span>Codigo NFC tarjeta</span>
+          <div className="nfc-code-control">
+            <input
+              ref={nfcInputRef}
+              value={form.nfc_uid}
+              readOnly
+              placeholder={nfcScanArmed ? 'Acerque la tarjeta al lector...' : 'Click para escanear'}
+              onFocus={() => onArmNfcScan?.()}
+              onClick={() => onArmNfcScan?.()}
+            />
+            <button
+              className="secondary-button nfc-scan-button"
+              type="button"
+              onClick={() => {
+                onArmNfcScan?.();
+                nfcInputRef.current?.focus();
+              }}
+              disabled={busy}
+              title="Escanear tarjeta NFC"
+              aria-label="Escanear tarjeta NFC"
+            >
+              <ScanLine size={15} aria-hidden="true" />
+              <span>Escanear</span>
+            </button>
+          </div>
+          <small>
+            {nfcScanArmed ? 'Lectura armada: escanee una tarjeta.' : 'Se completa automaticamente con el UID real del lector.'}
+          </small>
+        </label>
         <FormField
           label="Numero interno"
           type="number"

@@ -331,6 +331,40 @@ button {
   border-color: #6f8dde;
 }
 
+.field small {
+  color: var(--text-soft);
+  font-size: 0.64rem;
+}
+
+.nfc-code-field {
+  grid-column: span 2;
+}
+
+.nfc-code-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.nfc-code-control input {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #10254f;
+  background: #f8fbff;
+}
+
+.nfc-code-field-active input {
+  border-color: #26734d;
+  background: #f3fbf6;
+  box-shadow: 0 0 0 3px rgba(38, 115, 77, 0.1);
+}
+
+.nfc-scan-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .ops-summary {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -979,6 +1013,10 @@ button {
   .modal-wide-field {
     grid-column: span 2;
   }
+
+  .nfc-code-field {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1081,6 +1119,14 @@ button {
 
   .modal-wide-field {
     grid-column: span 1;
+  }
+
+  .nfc-code-field {
+    grid-column: span 1;
+  }
+
+  .nfc-code-control {
+    grid-template-columns: 1fr;
   }
 
   .icon-button span {
