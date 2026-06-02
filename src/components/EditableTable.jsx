@@ -42,8 +42,8 @@ export function EditableTable({
               <th className="sticky-col sticky-num">Nº</th>
               <th className="sticky-col sticky-cod">COD</th>
               <th className="sticky-col sticky-ppu">PPU</th>
-              <th>ZONA</th>
-              <th>SERVICIO</th>
+              <th className="zone-cell">ZONA</th>
+              <th className="service-cell">SERVICIO</th>
               {PROBLEM_COLUMNS.map((column) => (
                 <th className="problem-header" key={column.field}>{column.label}</th>
               ))}
@@ -74,10 +74,10 @@ export function EditableTable({
                   <td className="sticky-col sticky-ppu emphasis-cell">
                     <ReadOnlyCell value={row.ppu} strong />
                   </td>
-                  <td>
+                  <td className="zone-cell">
                     <ReadOnlyCell value={row.zona} />
                   </td>
-                  <td>
+                  <td className="service-cell">
                     <InlineField value={row.servicio} onSave={(value) => onSaveCell(row.id, { servicio: value })} />
                   </td>
                   {PROBLEM_COLUMNS.map((column) => (

@@ -536,6 +536,34 @@ button {
   text-align: center;
 }
 
+.fleet-table .zone-cell {
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  text-align: center;
+}
+
+.fleet-table .service-cell {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
+  text-align: center;
+}
+
+.zone-cell .read-only-cell {
+  justify-content: center;
+}
+
+.service-cell .inline-field,
+.service-cell .input-reset {
+  min-width: 0;
+  width: 100%;
+}
+
+.service-cell .input-reset {
+  text-align: center;
+}
+
 .sticky-col {
   position: sticky;
   z-index: 4;
