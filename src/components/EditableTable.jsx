@@ -39,7 +39,25 @@ export function EditableTable({
   const [wizardRowId, setWizardRowId] = useState(null);
   
   const copyPpu = (ppu) => {
-    if (ppu) navigator.clipboard.writeText(ppu).catch(console.error);
+    if (!ppu) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(ppu).catch(console.error);
+    } else {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = ppu;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      } catch (err) {
+        console.error('Error al copiar PPU', err);
+      }
+    }
   };
 
   const startWizard = () => {
@@ -69,6 +87,7 @@ export function EditableTable({
   };
 
   const handleWizardServiceChange = (row, index, val) => {
+    if (wizardRowId !== row.id) return; // Evitar doble trigger (Enter + Blur)
     onSaveCell(row.id, { servicio: val });
     if (val && val.toUpperCase().startsWith('T')) {
       advanceWizard(index);
@@ -175,15 +194,25 @@ export function EditableTable({
                       </td>
                       <td className="service-cell">
                         {wizardActive && wizardRowId === row.id ? (
-                          <select
-                            autoFocus
-                            className="wizard-select"
-                            value={row.servicio || ''}
-                            onChange={(e) => handleWizardServiceChange(row, index, e.target.value)}
-                          >
-                            <option value="" disabled>Seleccionar...</option>
-                            {WIZARD_SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
+                          <>
+                            <input
+                              autoFocus
+                              className="wizard-input"
+                              list={`wizard-services-${row.id}`}
+                              defaultValue={row.servicio || ''}
+                              placeholder="Escribe o selecciona..."
+                              onBlur={(e) => handleWizardServiceChange(row, index, e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleWizardServiceChange(row, index, e.target.value);
+                                }
+                              }}
+                            />
+                            <datalist id={`wizard-services-${row.id}`}>
+                              {WIZARD_SERVICES.map(s => <option key={s} value={s} />)}
+                            </datalist>
+                          </>
                         ) : (
                           <InlineField
                             value={row.servicio}
@@ -229,21 +258,26 @@ export function EditableTable({
                             autoFocus
                             className="wizard-input"
                             defaultValue={row.ubicacion || ''}
-                            placeholder="Ingrese ubicación y presione Enter"
+                            placeholder="Ubicación y Enter"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (wizardRowId !== row.id) return;
                                 onSaveCell(row.id, { ubicacion: e.target.value });
                                 advanceWizard(index);
                               }
                             }}
-                            onBlur={(e) => onSaveCell(row.id, { ubicacion: e.target.value })}
+                            onBlur={(e) => {
+                              if (wizardRowId === row.id) {
+                                onSaveCell(row.id, { ubicacion: e.target.value });
+                              }
+                            }}
                           />
                         ) : (
                           <InlineField
                             value={row.ubicacion}
                             onSave={(value) => {
                               onSaveCell(row.id, { ubicacion: value });
-                              if (wizardActive && wizardRowId === row.id) advanceWizard(index);
                             }}
                           />
                         )}
