@@ -985,12 +985,35 @@ p { margin: 0; }
 }
 
 .service-cell .inline-field,
-.service-cell .input-reset {
+.service-cell .input-reset,
+.service-cell .wizard-input {
   min-width: 0;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .service-cell .input-reset { text-align: center; }
+
+/* Wizard Styles */
+.wizard-controls {
+  margin-left: 12px;
+}
+
+.wizard-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 26px;
+  padding: 3px 6px;
+  font-size: 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--primary-500);
+  background: var(--primary-50);
+  color: var(--primary-900);
+  outline: none;
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
 
 /* Empty state */
 .empty-table-cell {
