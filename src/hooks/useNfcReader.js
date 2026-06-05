@@ -61,6 +61,12 @@ export function useNfcReader({ active, onRead }) {
         return;
       }
 
+      // Evitar interceptar teclas si el usuario está escribiendo en un campo
+      const targetTag = event.target?.tagName?.toUpperCase();
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag) || event.target?.isContentEditable) {
+        return;
+      }
+
       const now = Date.now();
 
       if (event.key === 'Enter') {
