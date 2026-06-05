@@ -12,6 +12,7 @@ import { FuelPanel } from './components/FuelPanel';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
 import { useMaintenanceSchedule } from './hooks/useMaintenanceSchedule';
+import { useFuelData } from './hooks/useFuelData';
 import { isSupabaseConfigured } from './lib/supabase';
 import {
   buildNfcLogPayload,
@@ -62,6 +63,9 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('operacion');
   const [scheduledMaintenance, setScheduledMaintenance] = useState(null);
+
+  const fuelData = useFuelData();
+  const { fuelRecords } = fuelData;
 
   const filteredRows = useMemo(() => applyFleetFilters(rows, filters), [rows, filters]);
   const counters = useMemo(() => computeCounters(filteredRows), [filteredRows]);
@@ -470,6 +474,7 @@ function App() {
                 <>
                   <EditableTable
                     rows={filteredRows}
+                    fuelRecords={fuelRecords}
                     selectedRowId={selectedRowId}
                     highlightedRowId={highlightedRowId}
                     rowStatuses={rowStatuses}
@@ -479,6 +484,7 @@ function App() {
                   />
                   <MobileFleetCards
                     rows={filteredRows}
+                    fuelRecords={fuelRecords}
                     selectedRowId={selectedRowId}
                     highlightedRowId={highlightedRowId}
                     rowStatuses={rowStatuses}
@@ -524,7 +530,7 @@ function App() {
               rows={filteredRows}
             />
           ) : activeView === 'combustible' ? (
-            <FuelPanel rows={filteredRows} />
+            <FuelPanel rows={filteredRows} fuelData={fuelData} />
           ) : null}
 
           <NfcOperModal

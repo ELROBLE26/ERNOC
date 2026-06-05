@@ -32,9 +32,8 @@ const pct = (part, total) =>
   total > 0 ? ((part / total) * 100).toFixed(1) : '0.0';
 
 /* ── Component ──────────────────────────────────────────────── */
-export function FuelPanel({ rows }) {
-  const { fuelRecords, lastUploadDate, fileName, parseFile, clearFuelData } =
-    useFuelData();
+export function FuelPanel({ rows, fuelData }) {
+  const { fuelRecords, lastUploadDate, fileName, parseFile, clearFuelData } = fuelData;
   const fileRef = useRef(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);

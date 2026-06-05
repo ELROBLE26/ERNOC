@@ -4,7 +4,7 @@ import {
   hasProblemX,
 } from '../utils/fleet';
 import { InlineField, SaveIndicator } from './InlineField';
-import { Table2, PlusSquare } from 'lucide-react';
+import { Table2, PlusSquare, Fuel } from 'lucide-react';
 
 const PROBLEM_COLUMNS = [
   { field: 'oper',    label: 'OPER' },
@@ -18,6 +18,7 @@ const PROBLEM_COLUMNS = [
 
 export function EditableTable({
   rows,
+  fuelRecords = [],
   selectedRowId,
   highlightedRowId,
   rowStatuses,
@@ -68,6 +69,12 @@ export function EditableTable({
               ? rows.map((row, index) => {
                   const isSelected = row.id === selectedRowId;
                   const hasProblem = hasProblemX(row);
+                  const hasFuel = fuelRecords.some(
+                    (f) =>
+                      (f.ppu && row.ppu && f.ppu === row.ppu) ||
+                      (f.cod && row.cod && f.cod === row.cod) ||
+                      (f.interno && row.cod && f.interno === row.cod)
+                  );
 
                   return (
                     <tr
@@ -83,7 +90,17 @@ export function EditableTable({
                         <ReadOnlyCell value={row.cod} strong />
                       </td>
                       <td className="sticky-col sticky-ppu emphasis-cell">
-                        <ReadOnlyCell value={row.ppu} strong />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <ReadOnlyCell value={row.ppu} strong />
+                          <Fuel 
+                            size={14} 
+                            style={{ 
+                              color: hasFuel ? 'var(--success-500)' : 'var(--danger-500)',
+                              flexShrink: 0 
+                            }} 
+                            title={hasFuel ? 'Con carga de combustible' : 'Sin carga de combustible'}
+                          />
+                        </div>
                       </td>
                       <td className="zone-cell">
                         <ReadOnlyCell value={row.zona} />

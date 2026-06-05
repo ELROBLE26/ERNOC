@@ -1,5 +1,6 @@
 import { buildExclusiveProblemPatch, getStatusTone, hasProblemX } from '../utils/fleet';
 import { InlineField, SaveIndicator } from './InlineField';
+import { Fuel } from 'lucide-react';
 
 const PROBLEM_COLUMNS = [
   { field: 'oper',    label: 'OPER' },
@@ -13,6 +14,7 @@ const PROBLEM_COLUMNS = [
 
 export function MobileFleetCards({
   rows,
+  fuelRecords = [],
   selectedRowId,
   highlightedRowId,
   rowStatuses,
@@ -43,6 +45,12 @@ export function MobileFleetCards({
       {rows.map((row, index) => {
         const isSelected = row.id === selectedRowId;
         const hasProblem = hasProblemX(row);
+        const hasFuel = fuelRecords.some(
+          (f) =>
+            (f.ppu && row.ppu && f.ppu === row.ppu) ||
+            (f.cod && row.cod && f.cod === row.cod) ||
+            (f.interno && row.cod && f.interno === row.cod)
+        );
 
         return (
           <article
@@ -56,7 +64,16 @@ export function MobileFleetCards({
                 <div>
                   <span className="mobile-index">N° {row.numero ?? index + 1}</span>
                   <h3>{row.cod || 'Sin COD'}</h3>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--gray-600)', marginTop: 1 }}>{row.ppu || 'Sin PPU'}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: 1 }}>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--gray-600)', margin: 0 }}>{row.ppu || 'Sin PPU'}</p>
+                    <Fuel 
+                      size={12} 
+                      style={{ 
+                        color: hasFuel ? 'var(--success-500)' : 'var(--danger-500)',
+                        flexShrink: 0
+                      }} 
+                    />
+                  </div>
                 </div>
                 <div className={`status-badge tone-${getStatusTone(row.estado)}`}>
                   {row.estado || 'PENDIENTE'}

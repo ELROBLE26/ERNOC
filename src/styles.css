@@ -2833,9 +2833,11 @@ p { margin: 0; }
 .fuel-th-sortable {
   cursor: pointer;
   user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+}
+
+.fuel-th-sortable svg {
+  vertical-align: middle;
+  margin-left: 4px;
 }
 
 .fuel-th-sortable:hover { color: var(--navy-700); }
