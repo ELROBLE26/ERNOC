@@ -532,11 +532,11 @@ function FuelHeaderBar({ fileName, lastUploadDate, recordCount, onClear, onReUpl
             </div>
           </div>
         </div>
-        {fileName && (
+        {(fileName || recordCount > 0) && (
           <div className="fuel-header-right">
             <div className="fuel-file-pill">
               <FileSpreadsheet size={12} />
-              <span>{fileName}</span>
+              <span>{fileName || 'Datos de Combustible'}</span>
               <span className="fuel-file-meta">
                 {recordCount} registros · {lastUploadDate
                   ? new Date(lastUploadDate).toLocaleString('es-CL')
@@ -551,15 +551,19 @@ function FuelHeaderBar({ fileName, lastUploadDate, recordCount, onClear, onReUpl
                 disabled={loading}
               >
                 <UploadCloud size={14} />
-                <span>Recargar</span>
+                <span>Subir Nuevo</span>
               </button>
               <button
                 className="danger-button icon-button"
                 type="button"
-                onClick={onClear}
+                onClick={() => {
+                  if (window.confirm('¿Seguro que deseas limpiar todo el análisis de combustible de la base de datos? Esto afectará a todos los usuarios.')) {
+                    onClear();
+                  }
+                }}
               >
                 <Trash2 size={14} />
-                <span>Limpiar</span>
+                <span>Limpiar Base de Datos</span>
               </button>
             </div>
           </div>
