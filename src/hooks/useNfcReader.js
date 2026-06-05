@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const READ_GAP_MS = 80;
+const READ_GAP_MS = 250;
 const DUPLICATE_WINDOW_MS = 2500;
 const MIN_UID_LENGTH = 4;
 
@@ -12,12 +12,17 @@ export function useNfcReader({ active, onRead }) {
   const lastKeyTimeRef = useRef(0);
   const recentReadsRef = useRef(new Map());
   const activeRef = useRef(active);
+  const onReadRef = useRef(onRead);
   const serialAbortRef = useRef(null);
   const webNfcAbortRef = useRef(null);
 
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
+
+  useEffect(() => {
+    onReadRef.current = onRead;
+  }, [onRead]);
 
   const processRead = useCallback(
     (rawValue, source = 'keyboard') => {
@@ -40,9 +45,9 @@ export function useNfcReader({ active, onRead }) {
         source,
         readAt: new Date(),
       });
-      onRead(nfcUid, source);
+      onReadRef.current(nfcUid, source);
     },
-    [onRead],
+    [],
   );
 
   useEffect(() => {

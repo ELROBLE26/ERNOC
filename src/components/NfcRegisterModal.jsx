@@ -12,7 +12,7 @@ export function NfcRegisterModal({
   onCancel,
 }) {
   const [form, setForm] = useState({
-    cod: '',
+    cod: nfcUid || '',
     ppu: '',
     numero: '',
     modelo: '',
@@ -23,7 +23,7 @@ export function NfcRegisterModal({
   useEffect(() => {
     if (open) {
       setForm({
-        cod: '',
+        cod: nfcUid || '',
         ppu: '',
         numero: '',
         modelo: '',
