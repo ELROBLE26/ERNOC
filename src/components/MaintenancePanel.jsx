@@ -236,8 +236,9 @@ export function MaintenancePanel({ schedule, lastUploadDate, onParseFile, onClea
 
   /* ── Inline edit handlers ─────────────────────────────────── */
   const handleFieldChange = (scheduleItem, field, value) => {
-    const idx = schedule.indexOf(scheduleItem);
-    if (idx !== -1) onUpdateEntry(idx, { [field]: value });
+    if (scheduleItem.id) {
+      onUpdateEntry(scheduleItem.id, { [field]: value });
+    }
   };
 
   /* ── Category filter options ──────────────────────────────── */

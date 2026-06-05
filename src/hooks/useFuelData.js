@@ -1,44 +1,78 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export function useFuelData() {
-  const [fuelRecords, setFuelRecords] = useState(() => {
-    try {
-      const stored = localStorage.getItem('ernoc_fuel_records');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Failed to parse stored fuel data', error);
-      return [];
-    }
-  });
+  const [fuelRecords, setFuelRecords] = useState([]);
+  const [lastUploadDate, setLastUploadDate] = useState(null);
+  const [fileName, setFileName] = useState(null);
 
-  const [lastUploadDate, setLastUploadDate] = useState(() => {
-    return localStorage.getItem('ernoc_fuel_upload_date') || null;
-  });
-
-  const [fileName, setFileName] = useState(() => {
-    return localStorage.getItem('ernoc_fuel_filename') || null;
-  });
-
-  const saveRecords = (records, name) => {
-    setFuelRecords(records);
-    localStorage.setItem('ernoc_fuel_records', JSON.stringify(records));
-    const now = new Date().toISOString();
-    setLastUploadDate(now);
-    localStorage.setItem('ernoc_fuel_upload_date', now);
-    if (name) {
-      setFileName(name);
-      localStorage.setItem('ernoc_fuel_filename', name);
+  const fetchRecords = async () => {
+    if (!isSupabaseConfigured) return;
+    const { data, error } = await supabase.from('fuel_records').select('*');
+    if (!error && data) {
+      const records = data.map((d) => d.raw_data);
+      setFuelRecords(records);
+      if (data.length > 0) {
+        setLastUploadDate(data[0].created_at);
+      } else {
+        setLastUploadDate(null);
+      }
     }
   };
 
-  const clearFuelData = () => {
+  useEffect(() => {
+    fetchRecords();
+
+    if (!isSupabaseConfigured) return;
+    const channel = supabase
+      .channel('fuel_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fuel_records' }, () => {
+        fetchRecords();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const saveRecords = async (records, name) => {
+    if (!isSupabaseConfigured) {
+      console.warn('Supabase no configurado');
+      return;
+    }
+    
+    setFuelRecords(records); // Optimistic UI
+    if (name) setFileName(name);
+    
+    try {
+      // Delete old records
+      await supabase.from('fuel_records').delete().neq('ppu', 'impossible_delete_all');
+      
+      const payload = records.map((r) => ({
+        ppu: r.ppu,
+        interno: r.cod,
+        litros: r.litros,
+        surtidor: r.surtidor,
+        fecha: r.fecha,
+        hora: r.hora,
+        raw_data: r,
+      }));
+      
+      await supabase.from('fuel_records').insert(payload);
+    } catch (error) {
+      console.error('Error subiendo a Supabase:', error);
+    }
+  };
+
+  const clearFuelData = async () => {
     setFuelRecords([]);
     setLastUploadDate(null);
     setFileName(null);
-    localStorage.removeItem('ernoc_fuel_records');
-    localStorage.removeItem('ernoc_fuel_upload_date');
-    localStorage.removeItem('ernoc_fuel_filename');
+    if (isSupabaseConfigured) {
+      await supabase.from('fuel_records').delete().neq('ppu', 'impossible_delete_all');
+    }
   };
 
   /**

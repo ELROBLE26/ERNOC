@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 /**
  * Category tags detected from the "detalle" field of each maintenance entry.
@@ -23,44 +24,97 @@ function detectCategories(detalle) {
 }
 
 export function useMaintenanceSchedule() {
-  const [schedule, setSchedule] = useState(() => {
-    try {
-      const stored = localStorage.getItem('ernoc_maintenance_schedule');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Failed to parse stored schedule', error);
-      return [];
+  const [schedule, setSchedule] = useState([]);
+  const [lastUploadDate, setLastUploadDate] = useState(null);
+
+  const fetchSchedule = async () => {
+    if (!isSupabaseConfigured) return;
+    const { data, error } = await supabase.from('maintenance_records').select('*');
+    if (!error && data) {
+      const records = data.map((d) => ({
+        ...d.raw_data,
+        id: d.id,
+        numeroOT: d.numero_ot || d.raw_data.numeroOT,
+        horaLlegada: d.hora_llegada || d.raw_data.horaLlegada,
+      }));
+      setSchedule(records);
+      if (data.length > 0) {
+        setLastUploadDate(data[0].created_at);
+      } else {
+        setLastUploadDate(null);
+      }
     }
-  });
-
-  const [lastUploadDate, setLastUploadDate] = useState(() => {
-    return localStorage.getItem('ernoc_maintenance_upload_date') || null;
-  });
-
-  const saveSchedule = (newSchedule) => {
-    setSchedule(newSchedule);
-    localStorage.setItem('ernoc_maintenance_schedule', JSON.stringify(newSchedule));
-    const now = new Date().toISOString();
-    setLastUploadDate(now);
-    localStorage.setItem('ernoc_maintenance_upload_date', now);
   };
 
-  const clearSchedule = () => {
+  useEffect(() => {
+    fetchSchedule();
+
+    if (!isSupabaseConfigured) return;
+    const channel = supabase
+      .channel('maint_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_records' }, () => {
+        fetchSchedule();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const saveSchedule = async (newSchedule) => {
+    if (!isSupabaseConfigured) {
+      console.warn('Supabase no configurado');
+      return;
+    }
+    setSchedule(newSchedule); // Optimistic
+
+    try {
+      await supabase.from('maintenance_records').delete().neq('ppu', 'impossible_delete_all');
+
+      const payload = newSchedule.map((s) => ({
+        ppu: s.ppu,
+        cod: s.cod,
+        fecha: s.fechaProgramada,
+        detalle: s.detalle,
+        numero_ot: s.numeroOT,
+        hora_llegada: s.horaLlegada,
+        raw_data: s,
+      }));
+
+      await supabase.from('maintenance_records').insert(payload);
+    } catch (error) {
+      console.error('Error subiendo mantenciones:', error);
+    }
+  };
+
+  const clearSchedule = async () => {
     setSchedule([]);
     setLastUploadDate(null);
-    localStorage.removeItem('ernoc_maintenance_schedule');
-    localStorage.removeItem('ernoc_maintenance_upload_date');
+    if (isSupabaseConfigured) {
+      await supabase.from('maintenance_records').delete().neq('ppu', 'impossible_delete_all');
+    }
   };
 
-  /**
-   * Update a single schedule entry (e.g. set arrival time or OT number).
-   */
-  const updateEntry = (idx, patch) => {
-    setSchedule((prev) => {
-      const next = prev.map((item, i) => (i === idx ? { ...item, ...patch } : item));
-      localStorage.setItem('ernoc_maintenance_schedule', JSON.stringify(next));
-      return next;
-    });
+  const updateEntry = async (id, patch) => {
+    if (!isSupabaseConfigured) return;
+    setSchedule((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+
+    const dbPatch = {};
+    if (patch.numeroOT !== undefined) dbPatch.numero_ot = patch.numeroOT;
+    if (patch.horaLlegada !== undefined) dbPatch.hora_llegada = patch.horaLlegada;
+    
+    // Also patch raw_data slightly to avoid inconsistencies if raw_data is read directly
+    const targetItem = schedule.find((s) => s.id === id);
+    if (targetItem) {
+      dbPatch.raw_data = { ...targetItem, ...patch };
+    }
+
+    try {
+      await supabase.from('maintenance_records').update(dbPatch).eq('id', id);
+    } catch (err) {
+      console.error('Error actualizando mantención:', err);
+    }
   };
 
   const parseFile = async (file) => {
