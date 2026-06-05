@@ -1,10 +1,18 @@
+import { useState } from 'react';
 import {
   buildExclusiveProblemPatch,
   getStatusTone,
   hasProblemX,
 } from '../utils/fleet';
 import { InlineField, SaveIndicator } from './InlineField';
-import { Table2, PlusSquare, Fuel } from 'lucide-react';
+import { Table2, PlusSquare, Fuel, PlayCircle, StopCircle, ClipboardCheck } from 'lucide-react';
+
+const WIZARD_SERVICES = [
+  "T1302", "T1304", "T1304C", "T1314E", "T1315E", 
+  "T1318", "T1322C", "T1344", "T1336", "T1391", "T1393", 
+  "Operativo Libre", "Apoyo La Reina", "Apoyo Escuela Militar", 
+  "Apoyo Colo Colo", "Apoyo Lo Barnechea", "Apoyo Lo Echevers", "Apoyo a Voy"
+];
 
 const PROBLEM_COLUMNS = [
   { field: 'oper',    label: 'OPER' },
@@ -22,10 +30,51 @@ export function EditableTable({
   selectedRowId,
   highlightedRowId,
   rowStatuses,
+  isOperativoMode,
   onSelectRow,
   onSaveCell,
   onOpenConfiguration,
 }) {
+  const [wizardActive, setWizardActive] = useState(false);
+  const [wizardRowId, setWizardRowId] = useState(null);
+  
+  const copyPpu = (ppu) => {
+    if (ppu) navigator.clipboard.writeText(ppu).catch(console.error);
+  };
+
+  const startWizard = () => {
+    if (rows.length === 0) return;
+    setWizardActive(true);
+    const firstId = rows[0].id;
+    setWizardRowId(firstId);
+    copyPpu(rows[0].ppu);
+    onSelectRow(firstId);
+  };
+
+  const stopWizard = () => {
+    setWizardActive(false);
+    setWizardRowId(null);
+  };
+
+  const advanceWizard = (currentIndex) => {
+    if (currentIndex + 1 < rows.length) {
+      const nextRow = rows[currentIndex + 1];
+      setWizardRowId(nextRow.id);
+      copyPpu(nextRow.ppu);
+      onSelectRow(nextRow.id);
+    } else {
+      stopWizard();
+      alert('Modo Rápido terminado. ¡Has completado toda la lista!');
+    }
+  };
+
+  const handleWizardServiceChange = (row, index, val) => {
+    onSaveCell(row.id, { servicio: val });
+    if (val && val.toUpperCase().startsWith('T')) {
+      advanceWizard(index);
+    }
+  };
+
   const hasRows = rows.length > 0;
 
   return (
@@ -33,13 +82,28 @@ export function EditableTable({
       <div className="table-panel-header">
         <div className="panel-title-row">
           <Table2 size={14} style={{ color: 'var(--gray-600)' }} aria-hidden="true" />
-          <div>
-            <h2>Tabla operativa</h2>
-            <p>
-              {hasRows
-                ? `${rows.length} buses visibles · edición directa en celda`
-                : 'Sin buses visibles con los filtros actuales.'}
-            </p>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2>Tabla operativa</h2>
+              <p>
+                {hasRows
+                  ? `${rows.length} buses visibles · edición directa en celda`
+                  : 'Sin buses visibles con los filtros actuales.'}
+              </p>
+            </div>
+            {isOperativoMode && hasRows && (
+              <div className="wizard-controls">
+                {!wizardActive ? (
+                  <button className="primary-button" onClick={startWizard}>
+                    <PlayCircle size={16} /> Iniciar Modo Rápido
+                  </button>
+                ) : (
+                  <button className="danger-button" onClick={stopWizard}>
+                    <StopCircle size={16} /> Detener Modo Rápido
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -110,10 +174,22 @@ export function EditableTable({
                         <ReadOnlyCell value={row.zona} />
                       </td>
                       <td className="service-cell">
-                        <InlineField
-                          value={row.servicio}
-                          onSave={(value) => onSaveCell(row.id, { servicio: value })}
-                        />
+                        {wizardActive && wizardRowId === row.id ? (
+                          <select
+                            autoFocus
+                            className="wizard-select"
+                            value={row.servicio || ''}
+                            onChange={(e) => handleWizardServiceChange(row, index, e.target.value)}
+                          >
+                            <option value="" disabled>Seleccionar...</option>
+                            {WIZARD_SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <InlineField
+                            value={row.servicio}
+                            onSave={(value) => onSaveCell(row.id, { servicio: value })}
+                          />
+                        )}
                       </td>
                       {PROBLEM_COLUMNS.map((column) => (
                         <td className="problem-cell" key={column.field}>
@@ -148,10 +224,29 @@ export function EditableTable({
                         />
                       </td>
                       <td>
-                        <InlineField
-                          value={row.ubicacion}
-                          onSave={(value) => onSaveCell(row.id, { ubicacion: value })}
-                        />
+                        {wizardActive && wizardRowId === row.id && row.servicio && !row.servicio.toUpperCase().startsWith('T') ? (
+                          <input
+                            autoFocus
+                            className="wizard-input"
+                            defaultValue={row.ubicacion || ''}
+                            placeholder="Ingrese ubicación y presione Enter"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                onSaveCell(row.id, { ubicacion: e.target.value });
+                                advanceWizard(index);
+                              }
+                            }}
+                            onBlur={(e) => onSaveCell(row.id, { ubicacion: e.target.value })}
+                          />
+                        ) : (
+                          <InlineField
+                            value={row.ubicacion}
+                            onSave={(value) => {
+                              onSaveCell(row.id, { ubicacion: value });
+                              if (wizardActive && wizardRowId === row.id) advanceWizard(index);
+                            }}
+                          />
+                        )}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
