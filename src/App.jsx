@@ -478,7 +478,7 @@ function App() {
                     selectedRowId={selectedRowId}
                     highlightedRowId={highlightedRowId}
                     rowStatuses={rowStatuses}
-                    isOperativoMode={filters.estado === 'Operativo'}
+                    isOperativoMode={filters.estado?.toUpperCase() === 'OPERATIVO'}
                     onSelectRow={setSelectedRowId}
                     onSaveCell={saveCell}
                     onOpenConfiguration={() => setActiveView('configuracion')}
