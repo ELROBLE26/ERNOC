@@ -1,5 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import * as XLSX from 'xlsx';
+
+/**
+ * Category tags detected from the "detalle" field of each maintenance entry.
+ * These are used for filtering, inspector workflows, and future modules.
+ */
+const CATEGORY_PATTERNS = [
+  { key: 'rtg',    label: 'Planta RTG',  color: 'danger',  patterns: ['planta de rtg', 'envio a planta', 'envío a planta'] },
+  { key: 'applus', label: 'APPLUS',      color: 'warning', patterns: ['applus'] },
+  { key: 'dtpm',   label: 'DTPM',        color: 'info',    patterns: ['dtpm'] },
+  { key: 'rechazo',label: 'Rechazo',     color: 'danger',  patterns: ['rechazo'] },
+  { key: 'rev_tec',label: 'Rev. Técnica',color: 'purple',  patterns: ['revisión técnica', 'revision tecnica', 'rev tecnica', 'rev. tecnica'] },
+  { key: 'gases',  label: 'Gases',       color: 'muted',   patterns: ['gases'] },
+];
+
+function detectCategories(detalle) {
+  if (!detalle) return [];
+  const lower = detalle.toLowerCase();
+  return CATEGORY_PATTERNS
+    .filter((cat) => cat.patterns.some((p) => lower.includes(p)))
+    .map((cat) => ({ key: cat.key, label: cat.label, color: cat.color }));
+}
 
 export function useMaintenanceSchedule() {
   const [schedule, setSchedule] = useState(() => {
@@ -31,6 +52,17 @@ export function useMaintenanceSchedule() {
     localStorage.removeItem('ernoc_maintenance_upload_date');
   };
 
+  /**
+   * Update a single schedule entry (e.g. set arrival time or OT number).
+   */
+  const updateEntry = (idx, patch) => {
+    setSchedule((prev) => {
+      const next = prev.map((item, i) => (i === idx ? { ...item, ...patch } : item));
+      localStorage.setItem('ernoc_maintenance_schedule', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const parseFile = async (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -41,7 +73,21 @@ export function useMaintenanceSchedule() {
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const parsedData = [];
 
-          for (const sheetName of workbook.SheetNames) {
+          // Encontrar la hoja correcta: El usuario indica que la hoja se llama igual que la fecha (ej: 05-06-2026)
+          // Buscamos hojas que tengan formato de fecha (DD-MM o DD-MM-YYYY)
+          const dateSheetRegex = /^(\d{2})[-/.](\d{2})(?:[-/.](\d{2,4}))?/;
+          const dateSheets = workbook.SheetNames.filter(name => dateSheetRegex.test(name.trim()));
+          
+          let targetSheets = [];
+          if (dateSheets.length > 0) {
+            // Si hay hojas con fechas, asumimos que la última de ellas es la más reciente o la que el usuario quiere ver
+            targetSheets = [dateSheets[dateSheets.length - 1]];
+          } else if (workbook.SheetNames.length > 0) {
+            // Fallback extremo si ninguna hoja tiene fecha
+            targetSheets = [workbook.SheetNames[workbook.SheetNames.length - 1]];
+          }
+
+          for (const sheetName of targetSheets) {
             const worksheet = workbook.Sheets[sheetName];
             const jsonRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
@@ -69,56 +115,78 @@ export function useMaintenanceSchedule() {
             throw new Error('No se encontraron las columnas esperadas (N° interno, PPU, etc) en ninguna hoja.');
           }
 
-          const today = new Date();
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-
-          const isSameDay = (d1, d2) => 
-            d1.getDate() === d2.getDate() && 
-            d1.getMonth() === d2.getMonth() && 
-            d1.getFullYear() === d2.getFullYear();
-
-          const isRelevantDate = (d) => isSameDay(d, today) || isSameDay(d, tomorrow) || isSameDay(d, yesterday);
-
           const parseDateValue = (val) => {
             if (!val) return null;
-            if (val instanceof Date) return val;
-            if (typeof val === 'number') {
-              // Excel date fallback
-              return new Date((val - 25569) * 86400 * 1000);
+            
+            // SheetJS with cellDates: true creates Dates in UTC matching the exact Excel display.
+            if (val instanceof Date) {
+              return {
+                 dateObj: val, // We keep the UTC offset handling clean
+                 year: val.getUTCFullYear(),
+                 month: val.getUTCMonth(),
+                 day: val.getUTCDate(),
+                 hour: val.getUTCHours(),
+                 min: val.getUTCMinutes()
+              };
             }
+            
+            // Excel serial date (e.g. 45367.916666)
+            if (typeof val === 'number') {
+              const utcDate = new Date((val - 25569) * 86400 * 1000);
+              return {
+                 dateObj: utcDate,
+                 year: utcDate.getUTCFullYear(),
+                 month: utcDate.getUTCMonth(),
+                 day: utcDate.getUTCDate(),
+                 hour: utcDate.getUTCHours(),
+                 min: utcDate.getUTCMinutes()
+              };
+            }
+            
+            // String date (e.g. "04-06-2026 22:00")
             if (typeof val === 'string') {
-              const parts = val.split(/[-/]/);
+              const [datePart, timePart] = val.split(' ');
+              const parts = datePart.split(/[-/]/);
               if (parts.length >= 3) {
                  const d = parseInt(parts[0], 10);
                  const m = parseInt(parts[1], 10) - 1;
                  let y = parseInt(parts[2], 10);
                  if (y < 100) y += 2000;
-                 return new Date(y, m, d);
+                 
+                 let h = 0;
+                 let min = 0;
+                 if (timePart) {
+                   const timeParts = timePart.split(':');
+                   if (timeParts.length >= 2) {
+                     h = parseInt(timeParts[0], 10);
+                     min = parseInt(timeParts[1], 10);
+                   }
+                 }
+                 return {
+                    dateObj: new Date(y, m, d, h, min),
+                    year: y, month: m, day: d, hour: h, min: min
+                 };
               }
             }
             return null;
           };
 
-          // Recolectar todas las fechas válidas para inferir cuál es "Día" y cuál "Noche"
-          // Solo nos importan las fechas cercanas (ayer, hoy, mañana) para no arrastrar datos históricos
-          const validDates = [];
-          for (const row of parsedData) {
-            const keys = Object.keys(row);
-            const fechaKey = keys.find(k => k.toLowerCase().includes('fecha programada de ingreso') || k.toLowerCase().includes('fecha ingreso'));
-            if (fechaKey && row[fechaKey]) {
-              const d = parseDateValue(row[fechaKey]);
-              if (d && isRelevantDate(d) && !validDates.some(vd => isSameDay(vd, d))) {
-                validDates.push(d);
-              }
-            }
+          // Determinar la fecha de la hoja seleccionada (que representa el Día según el usuario)
+          let sheetDateObj = null;
+          const chosenSheetName = targetSheets[0];
+          if (chosenSheetName) {
+             const match = chosenSheetName.match(dateSheetRegex);
+             if (match) {
+                const d = parseInt(match[1], 10);
+                const m = parseInt(match[2], 10) - 1;
+                let y = new Date().getFullYear(); // Si no hay año en la hoja, usamos el actual
+                if (match[3]) {
+                  y = parseInt(match[3], 10);
+                  if (y < 100) y += 2000;
+                }
+                sheetDateObj = new Date(y, m, d);
+             }
           }
-          
-          validDates.sort((a, b) => a.getTime() - b.getTime());
-          const dateNoche = validDates.length > 0 ? validDates[0] : null;
-          const dateDia = validDates.length > 1 ? validDates[1] : null;
 
           const newSchedule = [];
 
@@ -138,47 +206,62 @@ export function useMaintenanceSchedule() {
 
             if (!codRaw || !ppuRaw) continue;
 
-            const parsedDate = parseDateValue(fechaRaw);
-            
-            // Ignorar filas antiguas o futuras que no correspondan a la ventana operativa
-            if (!parsedDate || !isRelevantDate(parsedDate)) continue;
+            const parsedDateInfo = parseDateValue(fechaRaw);
+            if (!parsedDateInfo) continue;
 
             const cod = codRaw.toString().trim();
             const ppu = ppuRaw.toString().trim();
             const taller = tallerRaw?.toString().trim() || '';
             const detalle = detalleRaw?.toString().trim() || '';
             
-            let tipoTurno = null;
+            const { hour, year, month, day, dateObj } = parsedDateInfo;
+            let tipoTurno = 'Desconocido';
             
-            if (parsedDate && dateNoche) {
-               if (isSameDay(parsedDate, dateNoche)) {
-                 tipoTurno = 'Mantención noche';
-               } else if (dateDia && isSameDay(parsedDate, dateDia)) {
+            // Regla principal estricta dada por el usuario:
+            // La fecha del archivo (nombre de la hoja) SIEMPRE es la fecha de la "Mantención día".
+            // El día de inicio (día anterior) es "Mantención noche".
+            if (sheetDateObj) {
+               const isSameDayAsSheet = (year === sheetDateObj.getFullYear() && month === sheetDateObj.getMonth() && day === sheetDateObj.getDate());
+               
+               const dayBefore = new Date(sheetDateObj);
+               dayBefore.setDate(dayBefore.getDate() - 1);
+               const isDayBeforeSheet = (year === dayBefore.getFullYear() && month === dayBefore.getMonth() && day === dayBefore.getDate());
+               
+               if (isSameDayAsSheet) {
                  tipoTurno = 'Mantención día';
-               } else {
-                 // Si hay una tercera fecha extraña, la ponemos como noche por defecto
+               } else if (isDayBeforeSheet) {
                  tipoTurno = 'Mantención noche';
+               } else {
+                 // Si por algún motivo hay una fecha externa, nos fiamos de la hora
+                 if (hour >= 18 || (hour > 0 && hour <= 4)) tipoTurno = 'Mantención noche';
+                 else if (hour >= 5 && hour <= 17) tipoTurno = 'Mantención día';
+                 else tipoTurno = 'Mantención noche'; // Default
                }
             } else {
-               // Si no pudo parsear la fecha, intentamos forzar por nombre o ignorar
-               // Para debuggear, podemos logear
-               console.warn("Fecha no parseable para bus", cod, ":", fechaRaw);
+               // Fallback si la hoja no tenía formato de fecha
+               if (hour >= 18 || (hour > 0 && hour <= 4)) tipoTurno = 'Mantención noche';
+               else if (hour >= 5 && hour <= 17) tipoTurno = 'Mantención día';
+               else tipoTurno = 'Mantención noche';
             }
 
-            if (tipoTurno) {
-              let terminal = '';
-              if (taller?.toUpperCase().includes('EL ROBLE')) terminal = 'El Roble';
-              else if (taller?.toUpperCase().includes('LA REINA')) terminal = 'La Reina';
+            let terminal = '';
+            if (taller?.toUpperCase().includes('EL ROBLE')) terminal = 'El Roble';
+            else if (taller?.toUpperCase().includes('LA REINA')) terminal = 'La Reina';
 
-              newSchedule.push({
-                cod,
-                ppu,
-                terminal,
-                detalle,
-                turno: tipoTurno,
-                fechaProgramada: parsedDate ? parsedDate.toISOString() : null
-              });
-            }
+            const categories = detectCategories(detalle);
+
+            newSchedule.push({
+              cod,
+              ppu,
+              terminal,
+              detalle,
+              turno: tipoTurno,
+              fechaProgramada: dateObj.toISOString(),
+              horaLlegada: '',
+              numeroOT: '',
+              categories,
+              estado: 'Pendiente',
+            });
           }
 
           saveSchedule(newSchedule);
@@ -197,6 +280,8 @@ export function useMaintenanceSchedule() {
     schedule,
     lastUploadDate,
     parseFile,
-    clearSchedule
+    clearSchedule,
+    updateEntry,
+    CATEGORY_PATTERNS,
   };
 }

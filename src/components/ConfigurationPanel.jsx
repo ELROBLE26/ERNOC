@@ -1,8 +1,7 @@
 import { Settings2 } from 'lucide-react';
-import { NewBusForm } from './NewBusForm';
 import { NfcReaderPanel } from './NfcReaderPanel';
 
-export function ConfigurationPanel({ nfcProps, newBusProps }) {
+export function ConfigurationPanel({ nfcStatus, onTestNfcRead }) {
   return (
     <section className="configuration-view">
       <div className="panel configuration-header">
@@ -18,8 +17,7 @@ export function ConfigurationPanel({ nfcProps, newBusProps }) {
       </div>
 
       <div className="configuration-grid">
-        <NfcReaderPanel {...nfcProps} />
-        <NewBusForm {...newBusProps} />
+        <NfcReaderPanel {...nfcStatus} onTest={onTestNfcRead} />
       </div>
     </section>
   );

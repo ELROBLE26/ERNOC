@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download } from 'lucide-react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
 import { MobileFleetCards } from './components/MobileFleetCards';
-import { NfcNotRegisteredModal } from './components/NfcNotRegisteredModal';
+import { NfcRegisterModal } from './components/NfcRegisterModal';
 import { NfcOperModal } from './components/NfcOperModal';
 import { OperationsSummary } from './components/OperationsSummary';
 import { MaintenancePanel } from './components/MaintenancePanel';
+import { FuelPanel } from './components/FuelPanel';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
 import { useMaintenanceSchedule } from './hooks/useMaintenanceSchedule';
@@ -43,7 +44,7 @@ function App() {
   const [filters, setFilters] = useState(FILTER_DEFAULTS);
   const [workTerminal, setWorkTerminal] = useState('El Roble');
   
-  const { schedule, lastUploadDate, parseFile, clearSchedule } = useMaintenanceSchedule();
+  const { schedule, lastUploadDate, parseFile, clearSchedule, updateEntry } = useMaintenanceSchedule();
   
   const [selectedRowId, setSelectedRowId] = useState('');
   const [formBusy, setFormBusy] = useState(false);
@@ -55,11 +56,8 @@ function App() {
   const [currentNfcUid, setCurrentNfcUid] = useState('');
   const [currentNfcBus, setCurrentNfcBus] = useState(null);
   const [lastNfcBus, setLastNfcBus] = useState(null);
-  const [foundAssociationBus, setFoundAssociationBus] = useState(null);
   const [nfcOperOpen, setNfcOperOpen] = useState(false);
-  const [nfcNotRegisteredOpen, setNfcNotRegisteredOpen] = useState(false);
-  const [newBusNfcScanArmed, setNewBusNfcScanArmed] = useState(false);
-  const [newBusCapturedNfcUid, setNewBusCapturedNfcUid] = useState('');
+  const [nfcRegisterOpen, setNfcRegisterOpen] = useState(false);
   const [highlightedRowId, setHighlightedRowId] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('operacion');
@@ -83,19 +81,12 @@ function App() {
   );
 
   const handleNfcRead = async (nfcUid, source = 'keyboard') => {
-    if (newBusNfcScanArmed && activeView === 'configuracion') {
-      setNewBusCapturedNfcUid(nfcUid);
-      setNewBusNfcScanArmed(false);
-      setNfcMessage(`Codigo NFC capturado para nuevo bus: ${nfcUid}`);
-      return;
-    }
-
     if (!isSupabaseConfigured) {
       setNfcMessage('Configura Supabase antes de usar NFC.');
       return;
     }
 
-    if (nfcOperOpen || nfcNotRegisteredOpen || nfcSaving) {
+    if (nfcOperOpen || nfcRegisterOpen || nfcSaving) {
       return;
     }
 
@@ -103,15 +94,14 @@ function App() {
     setNfcMessage(`Lectura recibida por ${source}.`);
     setCurrentNfcUid(nfcUid);
     setCurrentNfcBus(null);
-    setFoundAssociationBus(null);
     setScheduledMaintenance(null);
 
     try {
       const card = await findNfcCard(nfcUid);
 
       if (!card) {
-        setNfcNotRegisteredOpen(true);
-        setNfcMessage('NFC no registrado.');
+        setNfcRegisterOpen(true);
+        setNfcMessage('NFC no registrado. Complete el formulario de nuevo bus.');
         return;
       }
 
@@ -272,63 +262,22 @@ function App() {
     await executeNfcSave(currentNfcBus, currentNfcUid, operation);
   };
 
-  const handleNfcAssociationSearch = async (searchValue) => {
-    setNfcSearching(true);
-    setNfcError('');
-    setFoundAssociationBus(null);
-
-    try {
-      const bus = await findFleetBusByCodOrPpu(searchValue);
-
-      if (!bus) {
-        setNfcError('No se encontro un bus con ese COD o PPU.');
-        return;
-      }
-
-      setFoundAssociationBus(bus);
-    } catch (searchError) {
-      setNfcError(searchError.message || 'No fue posible buscar el bus.');
-    } finally {
-      setNfcSearching(false);
-    }
-  };
-
-  const handleNfcAssociate = async ({ bus, terminal }) => {
-    if (!bus?.cod || !bus?.ppu) {
-      setNfcError('Selecciona un bus valido antes de asociar.');
-      return;
-    }
-
-    if (!terminal || terminal === 'Todos') {
-      setNfcError('Selecciona terminal para la asociacion.');
-      return;
-    }
-
+  const handleNfcCreateBus = async (busFormData) => {
     setNfcSaving(true);
     setNfcError('');
-
-    try {
-      await createNfcAssociation({
-        nfc_uid: currentNfcUid,
-        cod: bus.cod,
-        ppu: bus.ppu,
-        terminal_default: terminal,
-        observacion: 'Asociado desde Reporte Oper',
-      });
-      const nextBus = {
-        ...bus,
-        terminal,
-      };
-      setCurrentNfcBus(nextBus);
-      setLastNfcBus(nextBus);
-      setNfcNotRegisteredOpen(false);
-      setNfcOperOpen(true);
-      setNfcMessage('NFC asociado correctamente.');
-    } catch (associateError) {
-      setNfcError(associateError.message || 'No fue posible asociar el NFC.');
-    } finally {
-      setNfcSaving(false);
+    
+    // Usamos la misma función maestra handleCreate que inserta el bus en Supabase y luego crea la asociación NFC
+    const result = await handleCreate(busFormData);
+    
+    if (result.ok) {
+       setNfcRegisterOpen(false);
+       setNfcMessage(`Bus ${busFormData.cod} creado y asociado correctamente a la tarjeta ${busFormData.nfc_uid}.`);
+       await loadFleet(); // Refrescamos la lista
+    } else {
+       setNfcError(result.message || 'No se pudo registrar el bus.');
     }
+    
+    setNfcSaving(false);
   };
 
   const handleTestRead = () => {
@@ -394,6 +343,18 @@ function App() {
             >
               <span className="sidebar-link-icon"><CalendarClock size={14} /></span>
               Mantenciones
+            </button>
+            <button
+              type="button"
+              id="nav-combustible"
+              className={`sidebar-link ${activeView === 'combustible' ? 'sidebar-link-active' : ''}`}
+              onClick={() => {
+                setActiveView('combustible');
+                setSidebarOpen(false);
+              }}
+            >
+              <span className="sidebar-link-icon"><Fuel size={14} /></span>
+              Combustible
             </button>
             <button
               type="button"
@@ -530,7 +491,8 @@ function App() {
             </>
           ) : activeView === 'configuracion' ? (
             <ConfigurationPanel
-              nfcProps={{
+              onTestNfcRead={handleTestRead}
+              nfcStatus={{
                 active: nfcActive,
                 lastRead,
                 lastBus: lastNfcBus,
@@ -551,19 +513,6 @@ function App() {
                 onConnectSerial: handleConnectSerial,
                 onStartWebNfc: handleStartWebNfc,
               }}
-              newBusProps={{
-                visible: true,
-                onSubmit: handleCreate,
-                busy: formBusy,
-                capturedNfcUid: newBusCapturedNfcUid,
-                nfcScanArmed: newBusNfcScanArmed,
-                onArmNfcScan: () => {
-                  setNfcActive(true);
-                  setNewBusNfcScanArmed(true);
-                  setNfcMessage('Escaneo NFC armado para nuevo bus.');
-                },
-                onClearCapturedNfc: () => setNewBusCapturedNfcUid(''),
-              }}
             />
           ) : activeView === 'mantenciones' ? (
             <MaintenancePanel 
@@ -571,7 +520,11 @@ function App() {
               lastUploadDate={lastUploadDate}
               onParseFile={parseFile}
               onClear={clearSchedule}
+              onUpdateEntry={updateEntry}
+              rows={filteredRows}
             />
+          ) : activeView === 'combustible' ? (
+            <FuelPanel rows={filteredRows} />
           ) : null}
 
           <NfcOperModal
@@ -590,20 +543,16 @@ function App() {
             }}
           />
 
-          <NfcNotRegisteredModal
-            open={nfcNotRegisteredOpen}
+          <NfcRegisterModal
+            open={nfcRegisterOpen}
             nfcUid={currentNfcUid}
             terminalFilter={filters.terminal}
-            searching={nfcSearching}
-            saving={nfcSaving}
+            saving={nfcSaving || formBusy}
             error={nfcError}
-            foundBus={foundAssociationBus}
-            onSearch={handleNfcAssociationSearch}
-            onAssociate={handleNfcAssociate}
+            onCreate={handleNfcCreateBus}
             onCancel={() => {
-              setNfcNotRegisteredOpen(false);
+              setNfcRegisterOpen(false);
               setNfcError('');
-              setFoundAssociationBus(null);
             }}
           />
         </section>
