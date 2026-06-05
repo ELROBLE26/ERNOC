@@ -201,11 +201,27 @@ export function EditableTable({
                               list={`wizard-services-${row.id}`}
                               defaultValue={row.servicio || ''}
                               placeholder="Escribe o selecciona..."
-                              onBlur={(e) => handleWizardServiceChange(row, index, e.target.value)}
+                              onBlur={(e) => {
+                                let val = e.target.value;
+                                const typedVal = val.trim().toLowerCase();
+                                if (typedVal) {
+                                  const match = WIZARD_SERVICES.find(s => s.toLowerCase().startsWith(typedVal));
+                                  if (match) val = match;
+                                }
+                                e.target.value = val;
+                                handleWizardServiceChange(row, index, val);
+                              }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' || e.key === 'Tab') {
                                   e.preventDefault();
-                                  handleWizardServiceChange(row, index, e.target.value);
+                                  let val = e.target.value;
+                                  const typedVal = val.trim().toLowerCase();
+                                  if (typedVal) {
+                                    const match = WIZARD_SERVICES.find(s => s.toLowerCase().startsWith(typedVal));
+                                    if (match) val = match;
+                                  }
+                                  e.target.value = val;
+                                  handleWizardServiceChange(row, index, val);
                                 }
                               }}
                             />
