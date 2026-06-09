@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser } from 'lucide-react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -61,6 +61,7 @@ function App() {
   const [nfcRegisterOpen, setNfcRegisterOpen] = useState(false);
   const [highlightedRowId, setHighlightedRowId] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState('operacion');
   const [scheduledMaintenance, setScheduledMaintenance] = useState(null);
 
@@ -401,20 +402,29 @@ function App() {
 
   return (
     <main className="app-shell">
-      <div className={`layout-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <aside className="enterprise-sidebar">
+      <div className={`layout-shell ${sidebarOpen ? 'sidebar-open' : ''} ${sidebarCollapsed ? 'layout-collapsed' : ''}`}>
+        <aside className={`enterprise-sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           <div className="sidebar-top-bar" />
-          <div className="brand-block">
+          <div className="brand-block" style={{ display: 'flex', alignItems: 'center', width: '100%', paddingRight: '12px' }}>
             <div className="brand-icon">
               <Building2 size={16} />
             </div>
-            <div className="brand-text">
-              <strong>Turno Ernoc</strong>
-              <span>Centro Operativo</span>
-            </div>
+            {!sidebarCollapsed && (
+              <div className="brand-text">
+                <strong>Turno Ernoc</strong>
+                <span>Centro Operativo</span>
+              </div>
+            )}
+            <button 
+              className="icon-only-button" 
+              style={{ marginLeft: 'auto', color: 'var(--text-400)', background: 'transparent' }}
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            >
+              {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
           </div>
           <nav className="sidebar-nav">
-            <span className="sidebar-section-label">Módulos</span>
+            {!sidebarCollapsed && <span className="sidebar-section-label">Módulos</span>}
             <button
               type="button"
               id="nav-operacion"
@@ -423,9 +433,10 @@ function App() {
                 setActiveView('operacion');
                 setSidebarOpen(false);
               }}
+              title="Operación Flota"
             >
               <span className="sidebar-link-icon"><LayoutGrid size={14} /></span>
-              Operación Flota
+              {!sidebarCollapsed && <span className="sidebar-link-text">Operación Flota</span>}
             </button>
             <button
               type="button"
@@ -435,9 +446,10 @@ function App() {
                 setActiveView('mantenciones');
                 setSidebarOpen(false);
               }}
+              title="Mantenciones"
             >
               <span className="sidebar-link-icon"><CalendarClock size={14} /></span>
-              Mantenciones
+              {!sidebarCollapsed && <span className="sidebar-link-text">Mantenciones</span>}
             </button>
             <button
               type="button"
@@ -447,9 +459,10 @@ function App() {
                 setActiveView('combustible');
                 setSidebarOpen(false);
               }}
+              title="Combustible"
             >
               <span className="sidebar-link-icon"><Fuel size={14} /></span>
-              Combustible
+              {!sidebarCollapsed && <span className="sidebar-link-text">Combustible</span>}
             </button>
             <button
               type="button"
@@ -459,15 +472,16 @@ function App() {
                 setActiveView('configuracion');
                 setSidebarOpen(false);
               }}
+              title="Configuración"
             >
               <span className="sidebar-link-icon"><Settings size={14} /></span>
-              Configuración
+              {!sidebarCollapsed && <span className="sidebar-link-text">Configuración</span>}
             </button>
           </nav>
           <div className="sidebar-foot">
             <span className="sidebar-status-pill">
               <span className="sidebar-status-dot" />
-              {isSupabaseConfigured ? 'Supabase conectado' : 'Sin configurar'}
+              {!sidebarCollapsed && (isSupabaseConfigured ? 'Supabase conectado' : 'Sin configurar')}
             </span>
           </div>
         </aside>

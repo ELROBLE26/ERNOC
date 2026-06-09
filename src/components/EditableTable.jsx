@@ -137,7 +137,6 @@ export function EditableTable({
           <thead>
             <tr>
               <th className="sticky-col sticky-num">N°</th>
-              <th className="sticky-col sticky-cod">COD</th>
               <th className="sticky-col sticky-ppu">PPU</th>
               <th className="zone-cell">ZONA</th>
               <th className="service-cell">SERVICIO</th>
@@ -146,7 +145,7 @@ export function EditableTable({
                   {column.label}
                 </th>
               ))}
-              <th>Detalle Panne</th>
+              <th style={{ minWidth: '100px', maxWidth: '100px', width: '100px', padding: '0 8px' }}>Detalle Panne</th>
               <th>Observaciones</th>
               <th>Ubicación</th>
               <th>Estado</th>
@@ -177,9 +176,6 @@ export function EditableTable({
                       <td className="sticky-col sticky-num">
                         <div className="number-cell">{row.numero ?? index + 1}</div>
                         <div className="terminal-tag">{row.terminal}</div>
-                      </td>
-                      <td className="sticky-col sticky-cod emphasis-cell">
-                        <ReadOnlyCell value={row.cod} strong />
                       </td>
                       <td className="sticky-col sticky-ppu emphasis-cell">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -257,7 +253,7 @@ export function EditableTable({
                           />
                         </td>
                       ))}
-                      <td className="wide-cell">
+                      <td style={{ minWidth: '100px', maxWidth: '100px', width: '100px' }}>
                         <InlineField
                           value={row.detalle_panne}
                           multiline
