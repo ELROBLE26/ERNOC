@@ -89,17 +89,17 @@ export function PlanilleroApp() {
     const estructura = {
       'Isla 1': {
         surtidores: ['114', '115'],
-        tanques: ['Tanque 16 (30kL)', 'Tanque 17 (30kL)'],
+        tanques: ['Pozo 16 (30kL)', 'Pozo 17 (30kL)'],
         data: []
       },
       'Isla 2': {
         surtidores: ['116', '117'],
-        tanques: ['Tanque 118 (30kL)', 'AdBlue (4kL)'],
+        tanques: ['Pozo 118 (30kL)', 'AdBlue (4kL)'],
         data: []
       },
       'Isla 3': {
         surtidores: ['118', '119'],
-        tanques: ['Tanque 19 (30kL)', 'AdBlue (4kL)'],
+        tanques: ['Pozo 19 (30kL)', 'AdBlue (4kL)'],
         data: []
       },
       'Otros / Sin Isla': {
@@ -159,13 +159,17 @@ export function PlanilleroApp() {
                     <span className="bus-cod" style={{ fontSize: '1.4rem' }}>{bus.ppu}</span>
                     <span className="bus-ppu">N° {bus.numero || '-'} • {bus.tipo || 'Rígido'}</span>
                   </div>
-                  <div className="bus-card-right">
+                  <div className="bus-card-right" style={{ textAlign: 'right' }}>
                     {bus.pct !== null ? (
                       <span className={`fuel-badge ${bus.pct <= 30 ? 'critical' : bus.pct <= 50 ? 'warning' : 'ok'}`}>
                         {bus.pct}%
                       </span>
                     ) : (
-                      <span className="fuel-badge unknown">N/A</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                        <span className="fuel-badge unknown" style={{ fontSize: '0.75rem', padding: '2px 6px' }}>pendiente</span>
+                        {bus.estado && <span style={{ fontSize: '0.7rem', color: bus.estado === 'Operativo' ? 'var(--success-600)' : 'var(--danger-600)', fontWeight: 'bold' }}>{bus.estado}</span>}
+                        {bus.ubicacion && <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{bus.ubicacion}</span>}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -181,13 +185,17 @@ export function PlanilleroApp() {
                     <span className="bus-cod" style={{ fontSize: '1.4rem' }}>{bus.ppu}</span>
                     <span className="bus-ppu">N° {bus.numero || '-'} • {bus.tipo || 'Rígido'}</span>
                   </div>
-                  <div className="bus-card-right">
+                  <div className="bus-card-right" style={{ textAlign: 'right' }}>
                     {bus.pct !== null ? (
                       <span className={`fuel-badge ${bus.pct <= 30 ? 'critical' : bus.pct <= 50 ? 'warning' : 'ok'}`}>
                         {bus.pct}%
                       </span>
                     ) : (
-                      <span className="fuel-badge unknown">N/A</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                        <span className="fuel-badge unknown" style={{ fontSize: '0.75rem', padding: '2px 6px' }}>pendiente</span>
+                        {bus.estado && <span style={{ fontSize: '0.7rem', color: bus.estado === 'Operativo' ? 'var(--success-600)' : 'var(--danger-600)', fontWeight: 'bold' }}>{bus.estado}</span>}
+                        {bus.ubicacion && <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{bus.ubicacion}</span>}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -241,7 +249,7 @@ export function PlanilleroApp() {
                 <div key={islaName} className="isla-card" style={{ background: 'white', borderRadius: '12px', padding: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-xs)' }}>
                   <h3 style={{ fontSize: '1.1rem', margin: '0 0 8px 0', color: 'var(--navy-700)' }}>{islaName}</h3>
                   <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginBottom: '12px' }}>
-                    Tanques: {info.tanques.join(' / ')}
+                    Pozos: {info.tanques.join(' / ')}
                   </div>
                   
                   {info.data.length === 0 ? (

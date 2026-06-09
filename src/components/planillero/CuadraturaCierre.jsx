@@ -7,25 +7,25 @@ const ESTRUCTURA_ISLAS = [
   {
     nombre: 'Isla 1',
     surtidores: ['114', '115'],
-    tanques: ['Tanque 16 (30kL)', 'Tanque 17 (30kL)']
+    tanques: ['Pozo 16 (30kL)', 'Pozo 17 (30kL)']
   },
   {
     nombre: 'Isla 2',
     surtidores: ['116', '117'],
-    tanques: ['Tanque 118 (30kL)', 'AdBlue (Isla 2)']
+    tanques: ['Pozo 118 (30kL)', 'AdBlue (Isla 2)']
   },
   {
     nombre: 'Isla 3',
     surtidores: ['118', '119'],
-    tanques: ['Tanque 19 (30kL)', 'AdBlue (Isla 3)']
+    tanques: ['Pozo 19 (30kL)', 'AdBlue (Isla 3)']
   }
 ];
 
 const SURTIDORES_LIST = ['114', '115', '116', '117', '118', '119'];
 const TANQUES_LIST = [
-  'Tanque 16 (30kL)', 'Tanque 17 (30kL)',
-  'Tanque 118 (30kL)', 'AdBlue (Isla 2)',
-  'Tanque 19 (30kL)', 'AdBlue (Isla 3)'
+  'Pozo 16 (30kL)', 'Pozo 17 (30kL)',
+  'Pozo 118 (30kL)', 'AdBlue (Isla 2)',
+  'Pozo 19 (30kL)', 'AdBlue (Isla 3)'
 ];
 
 export function CuadraturaCierre() {
