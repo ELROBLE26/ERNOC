@@ -281,7 +281,7 @@ export function EditableTable({
                             defaultValue={row.ubicacion || ''}
                             placeholder="Ubicación y Enter"
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
+                              if (e.key === 'Enter' || e.key === 'Tab') {
                                 e.preventDefault();
                                 if (wizardRowId !== row.id) return;
                                 onSaveCell(row.id, { ubicacion: e.target.value });
