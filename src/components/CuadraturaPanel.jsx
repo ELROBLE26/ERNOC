@@ -143,7 +143,7 @@ export function CuadraturaPanel() {
                                   <div className="advanced-photo-zone" style={{ cursor: 'default' }}>
                                     {photo ? (
                                       <>
-                                        <a href={photo.url} target="_blank" rel="noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+                                        <a href={photo.url} target="_blank" rel="noreferrer" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
                                           <img src={photo.url} alt={photo.tank} className="advanced-photo-img" style={{ opacity: 0.95, transition: 'opacity 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=1} onMouseOut={e=>e.currentTarget.style.opacity=0.95} />
                                         </a>
                                         <span className="advanced-photo-tag">{s.surtidor}</span>
@@ -171,7 +171,7 @@ export function CuadraturaPanel() {
                                     <span className="manual">MEDICIÓN</span>
                                   </div>
                                   <div className="advanced-col-main">
-                                    <span className="big-number" style={{ fontSize: isAdblue ? '1.3rem' : '2.2rem', letterSpacing: isAdblue ? '0' : '-1px' }}>{displayNum}</span>
+                                    <span className="big-number">{displayNum}</span>
                                     <div className="advanced-input-wrapper" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 4px' }}>
                                       <div style={{ fontSize: '1.05rem', fontWeight: '800', textAlign: 'center', color: '#0F172A' }}>{t.litros_medidos} L</div>
                                     </div>
@@ -181,7 +181,7 @@ export function CuadraturaPanel() {
                                   <div className="advanced-photo-zone" style={{ cursor: 'default' }}>
                                     {photo ? (
                                       <>
-                                        <a href={photo.url} target="_blank" rel="noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+                                        <a href={photo.url} target="_blank" rel="noreferrer" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
                                           <img src={photo.url} alt={photo.tank} className="advanced-photo-img" style={{ opacity: 0.95, transition: 'opacity 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=1} onMouseOut={e=>e.currentTarget.style.opacity=0.95} />
                                         </a>
                                         <span className="advanced-photo-tag">{displayNum}</span>
