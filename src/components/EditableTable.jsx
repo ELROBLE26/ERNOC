@@ -325,7 +325,11 @@ export function EditableTable({
                                     calidad: '',
                                     adq: '',
                                     aft: '',
-                                    sinies: ''
+                                    sinies: '',
+                                    detalle_panne: '',
+                                    observaciones: '',
+                                    ubicacion: '',
+                                    servicio: ''
                                   });
                                 }
                               }}

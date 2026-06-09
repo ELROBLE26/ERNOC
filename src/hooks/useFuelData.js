@@ -7,8 +7,17 @@ export function useFuelData() {
   const [lastUploadDate, setLastUploadDate] = useState(null);
   const [fileName, setFileName] = useState(null);
   
-  const [telemetryRecords, setTelemetryRecords] = useState([]);
-  const [telemetryFileName, setTelemetryFileName] = useState(null);
+  const [telemetryRecords, setTelemetryRecords] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ernoc_telemetry_records');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [telemetryFileName, setTelemetryFileName] = useState(() => {
+    return localStorage.getItem('ernoc_telemetry_filename') || null;
+  });
 
   const fetchRecords = async () => {
     if (!isSupabaseConfigured) return;
@@ -361,6 +370,8 @@ export function useFuelData() {
 
           setTelemetryRecords(records);
           setTelemetryFileName(file.name);
+          localStorage.setItem('ernoc_telemetry_records', JSON.stringify(records));
+          localStorage.setItem('ernoc_telemetry_filename', file.name);
           resolve(records);
         } catch (err) {
           reject(err);
@@ -378,6 +389,8 @@ export function useFuelData() {
     setFileName(null);
     setTelemetryRecords([]);
     setTelemetryFileName(null);
+    localStorage.removeItem('ernoc_telemetry_records');
+    localStorage.removeItem('ernoc_telemetry_filename');
     if (isSupabaseConfigured) {
       await supabase.from('fuel_records').delete().neq('ppu', 'impossible_delete_all');
     }
