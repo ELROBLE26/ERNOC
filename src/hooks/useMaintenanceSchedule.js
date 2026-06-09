@@ -51,7 +51,7 @@ export function useMaintenanceSchedule() {
 
     if (!isSupabaseConfigured) return;
     const channel = supabase
-      .channel('maint_sync')
+      .channel(`maint_sync_${Math.random()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_records' }, () => {
         fetchSchedule();
       })

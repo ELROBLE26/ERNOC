@@ -45,7 +45,7 @@ export function useFuelData() {
 
     if (!isSupabaseConfigured) return;
     const channel = supabase
-      .channel('fuel_sync')
+      .channel(`fuel_sync_${Math.random()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fuel_records' }, () => {
         fetchRecords();
       })

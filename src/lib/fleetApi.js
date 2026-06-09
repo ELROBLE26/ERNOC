@@ -51,7 +51,7 @@ export async function deleteFleetRow(rowId) {
 export function subscribeToFleetChanges(onEvent) {
   const client = ensureSupabase();
   const channel = client
-    .channel('reporte-oper-flota')
+    .channel(`reporte-oper-flota-${Math.random()}`)
     .on(
       'postgres_changes',
       {
