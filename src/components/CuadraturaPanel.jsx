@@ -75,7 +75,7 @@ export function CuadraturaPanel() {
               {isExpanded && (
                 <div style={{ padding: '24px', borderTop: '1px solid var(--border)', background: 'var(--surface-muted)' }}>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+                  <div className="advanced-isla-container">
                     {[
                       {
                         title: 'Isla 1',
@@ -106,83 +106,96 @@ export function CuadraturaPanel() {
                       if (misSurtidores.length === 0 && misTanques.length === 0 && misFotos.length === 0) return null;
 
                       return (
-                        <div key={idx} style={{ background: 'white', borderRadius: '16px', border: '1px solid var(--gray-200)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ background: 'var(--navy-600)', color: 'white', padding: '16px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.2rem', letterSpacing: '1px' }}>
-                            {islaConfig.title.toUpperCase()}
+                        <div key={idx} className="advanced-isla-card">
+                          <div className={`advanced-isla-header isla-${idx + 1}`}>
+                            <span className="advanced-isla-number">{idx + 1}</span>
+                            <div className="advanced-isla-title-box">
+                              <h3>ISLA DE COMBUSTIBLE</h3>
+                              <p>
+                                {islaConfig.surtMatch.map(s => `Surt. ${s}`).join(' - ')}
+                                {misTanques.length > 0 && ' - '}
+                                {islaConfig.tankMatch.map(t => t.replace('Isla 2', 'AdBlue').replace('Isla 3', 'AdBlue')).join(' - ')}
+                              </p>
+                            </div>
                           </div>
                           
-                          <div style={{ padding: '20px', flex: 1 }}>
+                          <div className="advanced-isla-grid" style={{ flexWrap: 'wrap' }}>
                             {/* Surtidores */}
-                            {misSurtidores.length > 0 && (
-                              <div style={{ marginBottom: '24px' }}>
-                                <h5 style={{ color: 'var(--navy-700)', borderBottom: '2px solid var(--navy-100)', paddingBottom: '8px', marginBottom: '16px', fontSize: '1rem' }}>Surtidores</h5>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                  {misSurtidores.map(s => (
-                                    <div key={s.surtidor} style={{ background: 'var(--surface-muted)', padding: '16px', borderRadius: '12px', border: '1px solid var(--gray-200)' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-                                        <strong style={{ color: 'var(--navy-900)', fontSize: '1.1rem' }}>Surtidor {s.surtidor}</strong>
-                                        <span style={{ fontWeight: '800', background: s.desfase === 0 ? 'var(--gray-200)' : s.desfase > 0 ? 'var(--danger-100)' : 'var(--success-100)', color: s.desfase === 0 ? 'var(--gray-600)' : s.desfase > 0 ? 'var(--danger-700)' : 'var(--success-700)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.9rem' }}>
-                                          {s.desfase > 0 ? '+' : ''}{s.desfase.toFixed(1)} L
-                                        </span>
-                                      </div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '6px' }}>
-                                        <span>Num. Inicial:</span>
-                                        <strong style={{ color: 'var(--gray-800)' }}>{s.inicial}</strong>
-                                      </div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '8px' }}>
-                                        <span>Num. Final:</span>
-                                        <strong style={{ color: 'var(--gray-800)' }}>{s.final}</strong>
-                                      </div>
-                                      <div style={{ height: '1px', background: 'var(--gray-200)', margin: '12px 0' }}></div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '6px' }}>
-                                        <span>Consumo Reloj:</span>
-                                        <strong style={{ color: 'var(--gray-900)' }}>{s.consumo.toFixed(1)} L</strong>
-                                      </div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--gray-600)' }}>
-                                        <span>Cargados (App):</span>
-                                        <strong style={{ color: 'var(--navy-600)' }}>{s.litros_cargados.toFixed(1)} L</strong>
-                                      </div>
+                            {misSurtidores.map(s => {
+                              const photo = misFotos.find(f => String(f.tank).includes(s.surtidor));
+                              return (
+                                <div key={s.surtidor} className="advanced-col" style={{ minWidth: '160px' }}>
+                                  <div className="advanced-col-header">
+                                    <span className="label">SURTIDOR</span>
+                                    <span className="manual" style={{ color: s.desfase > 0 ? 'var(--danger-600)' : s.desfase < 0 ? 'var(--success-600)' : '' }}>
+                                      {s.desfase === 0 ? 'OK' : `Desfase: ${s.desfase > 0 ? '+' : ''}${s.desfase.toFixed(1)}L`}
+                                    </span>
+                                  </div>
+                                  <div className="advanced-col-main">
+                                    <span className="big-number">{s.surtidor}</span>
+                                    <div className="advanced-input-wrapper" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '4px' }}>
+                                      <div style={{ fontSize: '0.7rem', color: '#64748B', textAlign: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '2px' }}>{s.inicial}</div>
+                                      <div style={{ fontSize: '1.05rem', fontWeight: '800', textAlign: 'center', color: '#0F172A', paddingTop: '2px' }}>{s.final}</div>
                                     </div>
-                                  ))}
+                                  </div>
+                                  <div className="advanced-col-footer-text">ODÓMETRO</div>
+
+                                  <div className="advanced-photo-zone" style={{ cursor: 'default' }}>
+                                    {photo ? (
+                                      <>
+                                        <a href={photo.url} target="_blank" rel="noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+                                          <img src={photo.url} alt={photo.tank} className="advanced-photo-img" style={{ opacity: 0.95, transition: 'opacity 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=1} onMouseOut={e=>e.currentTarget.style.opacity=0.95} />
+                                        </a>
+                                        <span className="advanced-photo-tag">{s.surtidor}</span>
+                                      </>
+                                    ) : (
+                                      <div className="advanced-photo-placeholder">
+                                        <p style={{ color: '#CBD5E1' }}>Sin foto</p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })}
 
                             {/* Pozos/Tanques */}
-                            {misTanques.length > 0 && (
-                              <div style={{ marginBottom: '24px' }}>
-                                <h5 style={{ color: 'var(--navy-700)', borderBottom: '2px solid var(--navy-100)', paddingBottom: '8px', marginBottom: '16px', fontSize: '1rem' }}>Pozos / Tanques</h5>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                  {misTanques.map(t => (
-                                    <div key={t.tanque} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-muted)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--gray-200)' }}>
-                                      <span style={{ color: 'var(--gray-700)', fontWeight: '600' }}>{t.tanque}</span>
-                                      <span style={{ color: 'var(--navy-800)', fontWeight: '800' }}>{t.litros_medidos} L</span>
+                            {misTanques.map(t => {
+                              const isAdblue = t.tanque.toLowerCase().includes('adblue');
+                              const photo = misFotos.find(f => f.tank === t.tanque || String(f.tank).includes(isAdblue ? 'AdBlue' : t.tanque.split(' ')[1]));
+                              const displayNum = isAdblue ? 'Adblue' : t.tanque.split(' ')[1] || t.tanque;
+                              
+                              return (
+                                <div key={t.tanque} className="advanced-col" style={{ minWidth: '140px' }}>
+                                  <div className="advanced-col-header">
+                                    <span className={`label ${isAdblue ? 'blue' : ''}`}>{isAdblue ? 'ADBLUE' : 'POZO'}</span>
+                                    <span className="manual">MEDICIÓN</span>
+                                  </div>
+                                  <div className="advanced-col-main">
+                                    <span className="big-number" style={{ fontSize: isAdblue ? '1.3rem' : '2.2rem', letterSpacing: isAdblue ? '0' : '-1px' }}>{displayNum}</span>
+                                    <div className="advanced-input-wrapper" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 4px' }}>
+                                      <div style={{ fontSize: '1.05rem', fontWeight: '800', textAlign: 'center', color: '#0F172A' }}>{t.litros_medidos} L</div>
                                     </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                                  </div>
+                                  <div className="advanced-col-footer-text">NIVEL</div>
 
-                            {/* Fotos */}
-                            {misFotos.length > 0 && (
-                              <div>
-                                <h5 style={{ color: 'var(--navy-700)', borderBottom: '2px solid var(--navy-100)', paddingBottom: '8px', marginBottom: '16px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <Camera size={16} /> Fotografías
-                                </h5>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px' }}>
-                                  {misFotos.map((foto, idx) => (
-                                    <div key={idx} style={{ background: 'var(--gray-100)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--gray-200)' }}>
-                                      <a href={foto.url} target="_blank" rel="noreferrer" style={{ display: 'block', height: '120px', background: '#000' }}>
-                                        <img src={foto.url} alt={foto.tank} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9, transition: 'opacity 0.2s ease-in-out' }} onMouseOver={e => e.currentTarget.style.opacity = 1} onMouseOut={e => e.currentTarget.style.opacity = 0.9} />
-                                      </a>
-                                      <div style={{ padding: '8px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--gray-700)' }}>
-                                        {foto.tank}
+                                  <div className="advanced-photo-zone" style={{ cursor: 'default' }}>
+                                    {photo ? (
+                                      <>
+                                        <a href={photo.url} target="_blank" rel="noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+                                          <img src={photo.url} alt={photo.tank} className="advanced-photo-img" style={{ opacity: 0.95, transition: 'opacity 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=1} onMouseOut={e=>e.currentTarget.style.opacity=0.95} />
+                                        </a>
+                                        <span className="advanced-photo-tag">{displayNum}</span>
+                                      </>
+                                    ) : (
+                                      <div className="advanced-photo-placeholder">
+                                        <p style={{ color: '#CBD5E1' }}>Sin foto</p>
                                       </div>
-                                    </div>
-                                  ))}
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })}
+
                           </div>
                         </div>
                       );
