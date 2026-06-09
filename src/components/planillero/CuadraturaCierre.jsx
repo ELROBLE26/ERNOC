@@ -31,8 +31,9 @@ export function CuadraturaCierre() {
     SURTIDORES_LIST.forEach(s => map[s] = 0);
     for (const f of fuelRecords) {
       const s = String(f.surtidor || '').trim();
-      if (map[s] !== undefined) {
-        map[s] += Number(f.litros) || 0;
+      const matchedSurtidor = SURTIDORES_LIST.find(surt => s.includes(surt));
+      if (matchedSurtidor) {
+        map[matchedSurtidor] += Number(f.litros) || 0;
       }
     }
     return map;

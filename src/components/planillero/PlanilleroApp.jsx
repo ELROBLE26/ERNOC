@@ -114,7 +114,7 @@ export function PlanilleroApp() {
       const s = String(f.surtidor || '').trim();
       let foundIsla = 'Otros / Sin Isla';
       for (const [islaName, info] of Object.entries(estructura)) {
-        if (info.surtidores.includes(s)) {
+        if (info.surtidores.some(surt => s.includes(surt))) {
           foundIsla = islaName;
           break;
         }
