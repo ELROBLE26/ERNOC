@@ -148,16 +148,16 @@ export function CuadraturaCierre() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {ESTRUCTURA_ISLAS.map(isla => (
-          <div key={isla.nombre} style={{ background: 'white', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-            <div style={{ background: 'var(--navy-50)', padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ margin: 0, color: 'var(--navy-800)', fontSize: '1.2rem' }}>{isla.nombre}</h3>
+          <div key={isla.nombre} className="cuadratura-isla-card">
+            <div className="cuadratura-isla-header">
+              <h3>{isla.nombre}</h3>
             </div>
             
             <div style={{ padding: '16px' }}>
               
               {/* SURTIDORES */}
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: 'var(--gray-600)', textTransform: 'uppercase' }}>Surtidores</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Surtidores</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
                 {isla.surtidores.map(surtidor => {
                   const inicial = numInicial[surtidor] || 0;
                   const final = numFinal[surtidor] || 0;
@@ -167,43 +167,43 @@ export function CuadraturaCierre() {
                   const hasPhoto = !!fotos[`Surtidor ${surtidor}`];
 
                   return (
-                    <div key={surtidor} style={{ background: 'var(--gray-50)', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-200)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-                        <strong style={{ fontSize: '1.05rem', color: 'var(--gray-900)' }}>Surtidor {surtidor}</strong>
-                        <span style={{ fontSize: '0.8rem', background: 'var(--info-100)', color: 'var(--info-700)', padding: '4px 8px', borderRadius: '4px' }}>
+                    <div key={surtidor} className="cuadratura-surtidor-box">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '1.15rem', color: 'var(--text-main)', fontWeight: '800' }}>Surtidor {surtidor}</strong>
+                        <span style={{ fontSize: '0.8rem', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--accent-primary)', padding: '6px 10px', borderRadius: '8px', fontWeight: '700' }}>
                           Cargados App: {cargados.toFixed(1)} L
                         </span>
                       </div>
                       
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--gray-500)', marginBottom: '4px' }}>Numeral Inicial</label>
+                          <label className="cuadratura-input-label">Numeral Inicial</label>
                           <input 
                             type="number" placeholder="0.0" 
+                            className="cuadratura-input"
                             onChange={e => handleNumChange(surtidor, 'inicial', e.target.value)}
-                            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '0.9rem' }}
                           />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--gray-500)', marginBottom: '4px' }}>Numeral Final</label>
+                          <label className="cuadratura-input-label">Numeral Final</label>
                           <input 
                             type="number" placeholder="0.0" 
+                            className="cuadratura-input"
                             onChange={e => handleNumChange(surtidor, 'final', e.target.value)}
-                            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '0.9rem' }}
                           />
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px dashed var(--gray-200)', marginBottom: '12px' }}>
-                        <span style={{ color: 'var(--gray-600)', fontSize: '0.85rem' }}>Consumo Reloj: <b>{consumo > 0 ? consumo.toFixed(1) : '0.0'} L</b></span>
-                        <span style={{ fontSize: '0.85rem', color: desfase === 0 ? 'var(--gray-500)' : desfase > 0 ? 'var(--danger-600)' : 'var(--success-600)', fontWeight: 'bold' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px dashed rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500' }}>Consumo Reloj: <b style={{ color: 'var(--text-main)' }}>{consumo > 0 ? consumo.toFixed(1) : '0.0'} L</b></span>
+                        <span style={{ fontSize: '0.95rem', color: desfase === 0 ? 'var(--text-light)' : desfase > 0 ? 'var(--badge-crit-text)' : 'var(--badge-ok-text)', fontWeight: '800' }}>
                           Desfase: {desfase > 0 ? '+' : ''}{desfase.toFixed(1)} L
                         </span>
                       </div>
 
                       {/* Botón Foto Surtidor */}
-                      <label style={{ cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', background: hasPhoto ? 'var(--success-100)' : 'white', border: `1px solid ${hasPhoto ? 'var(--success-400)' : 'var(--gray-300)'}`, padding: '8px 12px', borderRadius: '6px', color: hasPhoto ? 'var(--success-700)' : 'var(--gray-700)', fontSize: '0.85rem', fontWeight: '500' }}>
-                        <Camera size={16} />
+                      <label className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`}>
+                        <Camera size={20} />
                         {hasPhoto ? 'Foto Surtidor Lista' : 'Tomar Foto Surtidor'}
                         <input 
                           type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
@@ -221,25 +221,25 @@ export function CuadraturaCierre() {
               </div>
 
               {/* POZOS / TANQUES */}
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: 'var(--gray-600)', textTransform: 'uppercase' }}>Pozos (Tanques)</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h4 style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pozos</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {isla.tanques.map(tanque => {
                   const hasPhoto = !!fotos[tanque];
                   return (
-                    <div key={tanque} style={{ background: 'var(--gray-50)', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-200)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>{tanque}</strong>
+                    <div key={tanque} className="cuadratura-surtidor-box" style={{ marginBottom: 0 }}>
+                      <strong style={{ fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: '800', display: 'block', marginBottom: '12px' }}>{tanque}</strong>
                       
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <div style={{ flex: 1 }}>
                           <input 
                             type="number" placeholder="Litros Medidos" 
+                            className="cuadratura-input"
                             onChange={e => handleLitrosPozoChange(tanque, e.target.value)}
-                            style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '0.9rem' }}
                           />
                         </div>
                         
-                        <label style={{ cursor: 'pointer', display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center', gap: '6px', background: hasPhoto ? 'var(--success-100)' : 'white', border: `1px solid ${hasPhoto ? 'var(--success-400)' : 'var(--gray-300)'}`, padding: '8px', borderRadius: '6px', color: hasPhoto ? 'var(--success-700)' : 'var(--gray-700)', fontSize: '0.85rem', fontWeight: '500' }}>
-                          <Camera size={16} />
+                        <label className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '12px' }}>
+                          <Camera size={18} />
                           {hasPhoto ? 'Lista' : 'Tomar Foto'}
                           <input 
                             type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
@@ -251,7 +251,6 @@ export function CuadraturaCierre() {
                           />
                         </label>
                       </div>
-
                     </div>
                   );
                 })}
@@ -267,7 +266,8 @@ export function CuadraturaCierre() {
         <button 
           onClick={handleSubmit}
           disabled={loading}
-          style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'var(--success-600)', color: 'white', padding: '16px', borderRadius: '12px', border: 'none', fontSize: '1.1rem', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+          className="btn-guardar-cierre"
+          style={{ opacity: loading ? 0.7 : 1 }}
         >
           <Save size={24} />
           {loading ? 'Procesando Cierre...' : 'Guardar y Cerrar Turno'}

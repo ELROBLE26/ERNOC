@@ -1,239 +1,474 @@
+/* MODERN ENTERPRISE REDESIGN FOR PLANILLERO APP */
+
+:root {
+  --app-bg: #f4f7f9;
+  --app-grad: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  
+  --glass-header: rgba(15, 23, 42, 0.85);
+  --glass-nav: rgba(255, 255, 255, 0.92);
+  --glass-blur: blur(16px);
+  
+  --card-bg: #ffffff;
+  --card-radius: 16px;
+  --card-border: 1px solid rgba(0, 0, 0, 0.04);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.05);
+  --card-shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  
+  --accent-primary: #2563eb;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  
+  --badge-ok-bg: #dcfce7;
+  --badge-ok-text: #15803d;
+  --badge-warn-bg: #fef08a;
+  --badge-warn-text: #a16207;
+  --badge-crit-bg: #fee2e2;
+  --badge-crit-text: #b91c1c;
+  --badge-unk-bg: #e2e8f0;
+  --badge-unk-text: #475569;
+}
+
 .planillero-app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background-color: var(--surface-muted);
-  font-family: 'Inter', sans-serif;
+  background: var(--app-grad);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
+  color: var(--text-main);
 }
 
+/* --- HEADER GLASSMORPHISM --- */
 .planillero-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+  gap: 16px;
+  background: var(--glass-header);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   color: white;
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  z-index: 10;
+  padding: 16px 20px;
+  z-index: 100;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 .back-to-desktop {
-  background: transparent;
-  border: none;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.1);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 8px;
   border-radius: 50%;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.back-to-desktop:hover {
-  background: rgba(255,255,255,0.1);
+.back-to-desktop:active {
+  transform: scale(0.92);
+  background: rgba(255,255,255,0.2);
 }
 
 .planillero-brand h1 {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
   margin: 0;
-  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .planillero-brand span {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   opacity: 0.8;
+  font-weight: 500;
 }
 
+/* --- CONTENT AREA --- */
 .planillero-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
-  padding-bottom: 80px; /* space for bottom nav */
+  padding: 20px 16px;
+  padding-bottom: 100px; /* nav padding */
+  scroll-behavior: smooth;
 }
 
 .planillero-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--gray-900);
-  margin-bottom: 4px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .terminal-subtitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--navy-700);
-  border-bottom: 2px solid var(--navy-100);
-  padding-bottom: 4px;
-  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid rgba(0,0,0,0.06);
+  padding-bottom: 8px;
+  margin-top: 12px;
 }
 
-.mt-4 { margin-top: 16px; }
+.mt-4 { margin-top: 24px; }
 
+/* --- CARDS & LISTS --- */
 .bus-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .bus-card {
-  background: white;
-  border-radius: var(--radius-md);
-  padding: 12px;
+  background: var(--card-bg);
+  border-radius: var(--card-radius);
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--shadow-xs);
-  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  border: var(--card-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.bus-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .bus-card-left {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .bus-cod {
-  font-size: 1.1rem;
+  font-size: 1.3rem !important;
   font-weight: 800;
-  color: var(--gray-900);
+  color: var(--text-main);
+  letter-spacing: -0.01em;
 }
 
 .bus-ppu {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--gray-600);
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .bus-surtidor {
-  font-size: 0.75rem;
-  color: var(--info-600);
-  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--accent-primary);
+  font-weight: 700;
+  background: rgba(37, 99, 235, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 4px;
 }
 
+/* --- BADGES --- */
 .bus-card-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
 }
 
 .fuel-badge {
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.fuel-badge.ok { background: var(--success-100); color: var(--success-600); }
-.fuel-badge.warning { background: var(--warning-100); color: var(--warning-600); }
-.fuel-badge.critical { background: var(--danger-100); color: var(--danger-600); }
-.fuel-badge.unknown { background: var(--gray-200); color: var(--gray-600); }
+.fuel-badge.ok { background: var(--badge-ok-bg); color: var(--badge-ok-text); }
+.fuel-badge.warning { background: var(--badge-warn-bg); color: var(--badge-warn-text); }
+.fuel-badge.critical { background: var(--badge-crit-bg); color: var(--badge-crit-text); }
+.fuel-badge.unknown { background: var(--badge-unk-bg); color: var(--badge-unk-text); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 10px; }
 
+/* --- ORDEN CARGA SPECIFIC --- */
 .carga-card {
-  border-left: 4px solid var(--success-600);
+  padding-left: 20px;
+}
+.carga-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--accent-gradient);
 }
 
 .carga-index {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--gray-400);
-  margin-right: 12px;
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-light);
+  opacity: 0.6;
 }
 
 .litros-text {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--success-600);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--badge-ok-text);
+  letter-spacing: -0.02em;
 }
 
 .hora-text {
-  font-size: 0.75rem;
-  color: var(--gray-500);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-top: 4px;
 }
 
+.planillero-search {
+  padding: 14px 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  font-size: 1rem !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+  background: white;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.planillero-search:focus {
+  outline: none;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* --- ISLAS & SURTIDORES --- */
 .surtidores-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 16px;
+}
+
+.isla-card {
+  background: var(--card-bg) !important;
+  border-radius: 20px !important;
+  padding: 20px !important;
+  border: var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.isla-card h3 {
+  font-size: 1.3rem !important;
+  font-weight: 800 !important;
+  color: var(--text-main) !important;
+  margin-bottom: 4px !important;
+}
+
+.isla-card .pozos-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .surtidor-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: var(--shadow-xs);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0,0,0,0.03);
+  margin-bottom: 8px;
 }
 
 .surtidor-icon {
-  background: var(--info-100);
-  color: var(--info-600);
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  background: white;
+  color: var(--accent-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-}
-
-.surtidor-info {
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .surtidor-name {
   font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--gray-900);
+  font-weight: 800;
+  color: var(--text-main);
 }
 
 .surtidor-count {
-  font-size: 0.85rem;
-  color: var(--gray-600);
-  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .surtidor-litros {
-  font-size: 0.85rem;
-  color: var(--success-600);
+  font-size: 1rem;
+  color: var(--badge-ok-text);
+  font-weight: 800;
+}
+
+/* --- CIERRE DE TURNO (CUADRATURA) --- */
+.cuadratura-isla-card {
+  background: var(--card-bg) !important;
+  border-radius: 20px !important;
+  border: var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  overflow: hidden;
+}
+
+.cuadratura-isla-header {
+  background: #f8fafc !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+.cuadratura-isla-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.cuadratura-surtidor-box {
+  background: white !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.cuadratura-input-label {
+  display: block;
+  font-size: 0.75rem !important;
   font-weight: 700;
-  margin-top: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted) !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.05em;
 }
 
-.empty-state {
-  text-align: center;
-  color: var(--gray-500);
-  font-size: 0.9rem;
-  padding: 24px 0;
+.cuadratura-input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  font-size: 1rem !important;
+  font-weight: 600;
+  background: #f8fafc !important;
+  transition: all 0.2s ease;
 }
 
-/* Bottom Navigation */
+.cuadratura-input:focus {
+  outline: none;
+  background: white !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+}
+
+.cuadratura-btn-camara {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.cuadratura-btn-camara:active {
+  transform: scale(0.96) !important;
+}
+
+.cuadratura-btn-camara.pending {
+  background: white !important;
+  border: 2px dashed rgba(0,0,0,0.2) !important;
+  color: var(--text-muted) !important;
+}
+
+.cuadratura-btn-camara.done {
+  background: var(--badge-ok-bg) !important;
+  border: 2px solid var(--badge-ok-text) !important;
+  color: var(--badge-ok-text) !important;
+}
+
+.btn-guardar-cierre {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: var(--text-main) !important;
+  color: white !important;
+  padding: 18px !important;
+  border-radius: 16px !important;
+  border: none !important;
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-guardar-cierre:active:not(:disabled) {
+  transform: scale(0.96) !important;
+  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.2) !important;
+}
+
+/* --- BOTTOM NAV GLASSMORPHISM --- */
 .planillero-bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background: white;
-  border-top: 1px solid var(--border);
+  height: 72px;
+  background: var(--glass-nav);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid rgba(0,0,0,0.06);
   display: flex;
   justify-content: space-around;
   align-items: center;
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  z-index: 10;
+  z-index: 100;
 }
 
 .nav-item {
@@ -242,19 +477,37 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   background: transparent;
   border: none;
-  color: var(--gray-500);
-  font-size: 0.7rem;
-  font-weight: 600;
-  transition: color 0.2s;
+  color: var(--text-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+}
+
+.nav-item svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-item.active {
-  color: var(--navy-700);
+  color: var(--accent-primary);
 }
 
-.nav-item:hover {
-  color: var(--navy-600);
+.nav-item.active svg {
+  transform: scale(1.2);
+  filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.3));
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 40px 20px;
+  background: white;
+  border-radius: var(--card-radius);
+  border: 1px dashed rgba(0,0,0,0.1);
 }

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Fuel, ListOrdered, Droplets, ArrowLeft, ClipboardCheck } from 'lucide-react';
+import { Fuel, ListOrdered, Droplets, ArrowLeft, ClipboardCheck, AlertTriangle, CheckCircle, MapPin, BusFront } from 'lucide-react';
 import { useFleetData } from '../../hooks/useFleetData';
 import { useFuelData } from '../../hooks/useFuelData';
 import { CuadraturaCierre } from './CuadraturaCierre';
@@ -165,10 +165,19 @@ export function PlanilleroApp() {
                         {bus.pct}%
                       </span>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        <span className="fuel-badge unknown" style={{ fontSize: '0.75rem', padding: '2px 6px' }}>pendiente</span>
-                        {bus.estado && <span style={{ fontSize: '0.7rem', color: bus.estado === 'Operativo' ? 'var(--success-600)' : 'var(--danger-600)', fontWeight: 'bold' }}>{bus.estado}</span>}
-                        {bus.ubicacion && <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{bus.ubicacion}</span>}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                        <span className="fuel-badge unknown">Pendiente</span>
+                        {bus.estado && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: bus.estado === 'Operativo' ? 'var(--badge-ok-text)' : 'var(--badge-crit-text)', fontWeight: '800' }}>
+                            {bus.estado === 'Operativo' ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
+                            {bus.estado}
+                          </span>
+                        )}
+                        {bus.ubicacion && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                            <MapPin size={10} /> {bus.ubicacion}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -191,10 +200,19 @@ export function PlanilleroApp() {
                         {bus.pct}%
                       </span>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        <span className="fuel-badge unknown" style={{ fontSize: '0.75rem', padding: '2px 6px' }}>pendiente</span>
-                        {bus.estado && <span style={{ fontSize: '0.7rem', color: bus.estado === 'Operativo' ? 'var(--success-600)' : 'var(--danger-600)', fontWeight: 'bold' }}>{bus.estado}</span>}
-                        {bus.ubicacion && <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{bus.ubicacion}</span>}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                        <span className="fuel-badge unknown">Pendiente</span>
+                        {bus.estado && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: bus.estado === 'Operativo' ? 'var(--badge-ok-text)' : 'var(--badge-crit-text)', fontWeight: '800' }}>
+                            {bus.estado === 'Operativo' ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
+                            {bus.estado}
+                          </span>
+                        )}
+                        {bus.ubicacion && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                            <MapPin size={10} /> {bus.ubicacion}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -246,23 +264,24 @@ export function PlanilleroApp() {
             <h2 className="section-title">Estado de Islas</h2>
             <div className="surtidores-grid">
               {islas.map(([islaName, info]) => (
-                <div key={islaName} className="isla-card" style={{ background: 'white', borderRadius: '12px', padding: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-xs)' }}>
-                  <h3 style={{ fontSize: '1.1rem', margin: '0 0 8px 0', color: 'var(--navy-700)' }}>{islaName}</h3>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginBottom: '12px' }}>
-                    Pozos: {info.tanques.join(' / ')}
+                <div key={islaName} className="isla-card">
+                  <h3>{islaName}</h3>
+                  <div className="pozos-info">
+                    <Droplets size={14} /> Pozos: {info.tanques.join(' / ')}
                   </div>
                   
                   {info.data.length === 0 ? (
-                    <p className="empty-state" style={{ padding: '8px' }}>Sin cargas registradas</p>
+                    <p className="empty-state">Sin cargas registradas</p>
                   ) : (
                     info.data.map(s => (
-                      <div key={s.name} style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--gray-100)', paddingTop: '8px', marginTop: '8px' }}>
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '0.95rem' }}>Surtidor {s.name}</strong>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>{s.count} buses</span>
+                      <div key={s.name} className="surtidor-card">
+                        <div className="surtidor-icon">
+                          <Droplets size={24} />
                         </div>
-                        <div style={{ fontWeight: '800', color: 'var(--success-600)' }}>
-                          {s.litros.toFixed(1)} L
+                        <div className="surtidor-info">
+                          <span className="surtidor-name">Surtidor {s.name}</span>
+                          <span className="surtidor-count">{s.count} cargas registradas</span>
+                          <span className="surtidor-litros">{s.litros.toFixed(1)} L Totales</span>
                         </div>
                       </div>
                     ))
