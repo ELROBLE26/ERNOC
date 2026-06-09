@@ -33,7 +33,7 @@ const pct = (part, total) =>
   total > 0 ? ((part / total) * 100).toFixed(1) : '0.0';
 
 /* ── Component ──────────────────────────────────────────────── */
-export function FuelPanel({ rows, fuelData }) {
+export function FuelPanel({ rows, fuelData, onSaveCell }) {
   const { fuelRecords, telemetryRecords, lastUploadDate, fileName, telemetryFileName, parseFile, parseTelemetryFile, clearFuelData } = fuelData;
   const fileRef = useRef(null);
   const telemetryRef = useRef(null);
@@ -556,6 +556,7 @@ export function FuelPanel({ rows, fuelData }) {
               toggleSort={toggleSort}
               SortIcon={SortIcon}
               onExport={() => exportXlsx(filteredNoCargados, 'nocargados')}
+              onSaveCell={onSaveCell}
             />
           )}
           {activeTab === 'detalle' && (
@@ -811,7 +812,12 @@ function CargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, onEx
 }
 
 /* ── No Cargados Table ──────────────────────────────────────── */
-function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, onExport }) {
+const UBICACIONES_INTERNAS = [
+  "Isla 1", "Isla 2", "3 Marias", "Isla 3", "Isla 4", "Isla 5", 
+  "Frente a Taller", "Taller", "Vidrios", "Rodillos", "Bandejon"
+];
+
+function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, onExport, onSaveCell }) {
   return (
     <div className="fuel-table-section">
       <div className="fuel-table-header">
@@ -858,7 +864,31 @@ function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, on
                   <td>{bus.servicio || '—'}</td>
                   <td className="fuel-td-center"><strong>{bus.pctComb}</strong></td>
                   <td>{bus.ubicacion || '—'}</td>
-                  <td>{bus.ubicacion_interna || '—'}</td>
+                  <td>
+                    <select
+                      className="fleet-select"
+                      style={{
+                        width: '100%',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--gray-200)',
+                        backgroundColor: 'white',
+                        color: 'var(--gray-900)',
+                        fontSize: '12px'
+                      }}
+                      value={bus.ubicacion_interna || ''}
+                      onChange={(e) => {
+                        if (onSaveCell) {
+                          onSaveCell(bus.id, { ubicacion_interna: e.target.value });
+                        }
+                      }}
+                    >
+                      <option value="">-- Seleccionar --</option>
+                      {UBICACIONES_INTERNAS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </td>
                   <td>
                     <span className={`status-badge ${
                       bus.estado === 'Operativo' ? 'tone-success' :

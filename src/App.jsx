@@ -606,7 +606,7 @@ function App() {
               rows={filteredRows}
             />
           ) : activeView === 'combustible' ? (
-            <FuelPanel rows={rows} fuelData={fuelData} />
+            <FuelPanel rows={rows} fuelData={fuelData} onSaveCell={saveCell} />
           ) : null}
 
           <NfcOperModal
