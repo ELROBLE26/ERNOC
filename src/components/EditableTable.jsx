@@ -137,7 +137,7 @@ export function EditableTable({
           <thead>
             <tr>
               <th className="sticky-col sticky-num">N°</th>
-              <th className="sticky-col sticky-ppu">PPU</th>
+              <th className="sticky-col sticky-ppu" style={{ minWidth: '90px', maxWidth: '90px', width: '90px' }}>PPU</th>
               <th className="zone-cell">ZONA</th>
               <th className="service-cell">SERVICIO</th>
               {PROBLEM_COLUMNS.map((column) => (

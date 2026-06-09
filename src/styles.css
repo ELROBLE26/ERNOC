@@ -873,8 +873,9 @@ p { margin: 0; }
 
 .sticky-ppu {
   left: var(--sticky-num);
-  min-width: 84px;
-  max-width: 84px;
+  min-width: 90px;
+  max-width: 90px;
+  width: 90px;
 }
 
 .fleet-table thead .sticky-col { z-index: 7; }
