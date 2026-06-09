@@ -317,12 +317,26 @@ export function FuelPanel({ rows, fuelData, onSaveCell }) {
   /* ── XLSX Export ────────────────────────────────────────────── */
   const exportXlsx = (data, name) => {
     if (!data || data.length === 0) return;
-    const keys = Object.keys(data[0]).filter((k) => !k.startsWith('_'));
-    const rowsForExport = data.map(r => {
-      const obj = {};
-      keys.forEach(k => obj[k] = r[k]);
-      return obj;
-    });
+    
+    let rowsForExport = [];
+    
+    if (name === 'nocargados') {
+      rowsForExport = data.map(r => ({
+        PPU: r.ppu || '',
+        'N° Interno': r.cod || '',
+        Estado: r.estado || '',
+        'Ubicación Interna': r.ubicacion || '',
+        '% Tanque': r.pctComb || '-',
+      }));
+    } else {
+      const keys = Object.keys(data[0]).filter((k) => !k.startsWith('_'));
+      rowsForExport = data.map(r => {
+        const obj = {};
+        keys.forEach(k => obj[k] = r[k]);
+        return obj;
+      });
+    }
+
     const worksheet = XLSX.utils.json_to_sheet(rowsForExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
@@ -752,7 +766,7 @@ function CargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, onEx
           </span>
         </div>
         <button className="secondary-button" onClick={onExport} disabled={data.length === 0}>
-          <Download size={13} /> Exportar CSV
+          <Download size={13} /> Exportar Excel
         </button>
       </div>
       <div className="fuel-table-scroll">
@@ -829,7 +843,7 @@ function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, on
           </span>
         </div>
         <button className="secondary-button" onClick={onExport} disabled={data.length === 0}>
-          <Download size={13} /> Exportar CSV
+          <Download size={13} /> Exportar Excel
         </button>
       </div>
       <div className="fuel-table-scroll">
@@ -932,7 +946,7 @@ function DetalleTable({ records, searchTerm, onExport }) {
           <strong>{filtered.length}</strong> registros de carga
         </div>
         <button className="secondary-button" onClick={onExport} disabled={filtered.length === 0}>
-          <Download size={13} /> Exportar CSV
+          <Download size={13} /> Exportar Excel
         </button>
       </div>
       <div className="fuel-table-scroll">

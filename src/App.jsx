@@ -28,7 +28,7 @@ import {
   ESTADO_OPTIONS,
   applyFleetFilters,
   computeCounters,
-  downloadCsv,
+  downloadXlsx,
   getFieldOptions,
 } from './utils/fleet';
 
@@ -535,14 +535,14 @@ function App() {
                       Limpiar Reporte
                     </button>
                     <button
-                      id="btn-export-csv"
+                      id="btn-export-excel"
                       className="secondary-button"
                       type="button"
-                      onClick={() => downloadCsv(filteredRows)}
-                      title="Exportar tabla a CSV"
+                      onClick={() => downloadXlsx(filteredRows)}
+                      title="Exportar tabla a Excel"
                     >
                       <Download size={13} />
-                      CSV
+                      Excel
                     </button>
                   </div>
                 )}

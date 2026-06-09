@@ -1,3 +1,5 @@
+import * as XLSX from 'xlsx';
+
 export const ESTADO_OPTIONS = ['OPERATIVO', 'NO OPERATIVO', 'EN PANNE', 'EN MANTENCIÓN', 'OBSERVADO', 'PENDIENTE'];
 export const PROBLEM_FIELDS = ['oper', 'vidrio', 'mant', 'calidad', 'adq', 'aft', 'sinies'];
 
@@ -172,17 +174,17 @@ export function buildExclusiveProblemPatch(problemField) {
   };
 }
 
-export function buildCsv(rows) {
+export function downloadXlsx(rows, fileName = 'reporte-oper.xlsx') {
   const headers = [
-    'Nº',
+    'N°',
     'COD',
     'PPU',
-    'TERMINAL',
-    'ZONA',
-    'SERVICIO',
-    'MODELO',
-    'ASIGNACION',
-    'TIPO',
+    'Terminal',
+    'Zona',
+    'Servicio',
+    'Modelo',
+    'Asignación',
+    'Tipo',
     'OPER',
     'VIDRIO',
     'MANT',
@@ -192,7 +194,7 @@ export function buildCsv(rows) {
     'SINIES',
     'Detalle Panne',
     'Observaciones',
-    'UBICACIÓN',
+    'Ubicación',
     'Estado',
   ];
 
@@ -219,24 +221,10 @@ export function buildCsv(rows) {
     row.estado,
   ]);
 
-  return [headers, ...lines]
-    .map((line) =>
-      line
-        .map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`)
-        .join(','),
-    )
-    .join('\n');
-}
-
-export function downloadCsv(rows, fileName = 'reporte-oper.csv') {
-  const csv = buildCsv(rows);
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.click();
-  URL.revokeObjectURL(url);
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...lines]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte Flota");
+  XLSX.writeFile(workbook, fileName);
 }
 
 export function nextNumero(rows) {
