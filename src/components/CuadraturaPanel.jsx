@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCuadratura } from '../../hooks/useCuadratura';
+import { useCuadratura } from '../hooks/useCuadratura';
 import { Camera, Calendar, Droplets, AlertTriangle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
