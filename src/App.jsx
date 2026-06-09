@@ -67,6 +67,32 @@ function App() {
   const fuelData = useFuelData();
   const { fuelRecords } = fuelData;
 
+  const { currentFuelLitros, currentTelemetryPct } = useMemo(() => {
+    if (!nfcOperOpen || !currentNfcBus) return { currentFuelLitros: 0, currentTelemetryPct: null };
+    
+    const clean = (s) => (s || '').toString().trim().toLowerCase();
+    const rPpu = clean(currentNfcBus.ppu);
+    const rCod = clean(currentNfcBus.cod);
+
+    let litros = 0;
+    for (const f of fuelRecords) {
+      if ((f.ppu && clean(f.ppu) === rPpu) || (f.cod && clean(f.cod) === rCod) || (f.interno && clean(f.interno) === rCod)) {
+        litros += Number(f.litros) || 0;
+      }
+    }
+
+    let pct = null;
+    if (fuelData.telemetryRecords) {
+      const t = fuelData.telemetryRecords.find(t => 
+        (t.codigoRegistro && clean(t.codigoRegistro) === rPpu) ||
+        (t.codigoInterno && clean(t.codigoInterno) === rCod)
+      );
+      if (t) pct = t.valor;
+    }
+
+    return { currentFuelLitros: litros, currentTelemetryPct: pct };
+  }, [nfcOperOpen, currentNfcBus, fuelRecords, fuelData.telemetryRecords]);
+
   const filteredRows = useMemo(() => applyFleetFilters(rows, filters), [rows, filters]);
   const counters = useMemo(() => computeCounters(filteredRows), [filteredRows]);
   const zoneOptions = useMemo(() => getFieldOptions(rows, 'zona'), [rows]);
@@ -135,7 +161,10 @@ function App() {
         return;
       }
 
-      const bus = await findFleetBusFromCard(card);
+      let bus = rows.find((r) => r.cod === card.cod || r.ppu === card.ppu);
+      if (!bus) {
+        bus = await findFleetBusFromCard(card);
+      }
 
       if (!bus) {
         const message = 'NFC asociado, pero el bus no existe en reporte_oper_flota.';
@@ -615,35 +644,8 @@ function App() {
             bus={currentNfcBus}
             terminalFilter={workTerminal}
             scheduledMaintenance={scheduledMaintenance}
-            fuelLitros={
-              currentNfcBus
-                ? fuelRecords
-                    .filter((f) => {
-                      const clean = (s) => (s || '').toString().trim().toLowerCase();
-                      const rPpu = clean(currentNfcBus.ppu);
-                      const rCod = clean(currentNfcBus.cod);
-                      return (
-                        (f.ppu && rPpu && clean(f.ppu) === rPpu) ||
-                        (f.cod && rCod && clean(f.cod) === rCod) ||
-                        (f.interno && rCod && clean(f.interno) === rCod)
-                      );
-                    })
-                    .reduce((sum, f) => sum + (Number(f.litros) || 0), 0)
-                : 0
-            }
-            telemetryPct={
-              currentNfcBus
-                ? (fuelData.telemetryRecords.find((t) => {
-                    const clean = (s) => (s || '').toString().trim().toLowerCase();
-                    const rPpu = clean(currentNfcBus.ppu);
-                    const rCod = clean(currentNfcBus.cod);
-                    return (
-                      (t.codigoRegistro && rPpu && clean(t.codigoRegistro) === rPpu) ||
-                      (t.codigoInterno && rCod && clean(t.codigoInterno) === rCod)
-                    );
-                  })?.valor || null)
-                : null
-            }
+            fuelLitros={currentFuelLitros}
+            telemetryPct={currentTelemetryPct}
             saving={nfcSaving}
             error={nfcError}
             onSave={handleNfcSave}
