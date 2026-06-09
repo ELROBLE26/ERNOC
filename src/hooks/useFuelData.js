@@ -31,6 +31,13 @@ export function useFuelData() {
         setLastUploadDate(null);
       }
     }
+
+    const { data: telemetryData, error: telError } = await supabase.from('telemetry_records').select('*');
+    if (!telError && telemetryData && telemetryData.length > 0) {
+      const tRecs = telemetryData.map((d) => d.raw_data);
+      setTelemetryRecords(tRecs);
+      localStorage.setItem('ernoc_telemetry_records', JSON.stringify(tRecs));
+    }
   };
 
   useEffect(() => {
@@ -40,6 +47,9 @@ export function useFuelData() {
     const channel = supabase
       .channel('fuel_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fuel_records' }, () => {
+        fetchRecords();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'telemetry_records' }, () => {
         fetchRecords();
       })
       .subscribe();
@@ -372,6 +382,23 @@ export function useFuelData() {
           setTelemetryFileName(file.name);
           localStorage.setItem('ernoc_telemetry_records', JSON.stringify(records));
           localStorage.setItem('ernoc_telemetry_filename', file.name);
+
+          if (isSupabaseConfigured) {
+            try {
+              await supabase.from('telemetry_records').delete().neq('ppu', 'impossible_delete_all');
+              const payload = records.map((r) => ({
+                ppu: r.codigoRegistro,
+                interno: r.codigoInterno,
+                telemetry_pct: r.valor,
+                fecha: new Date().toISOString(),
+                raw_data: r,
+              }));
+              await supabase.from('telemetry_records').insert(payload).catch(console.warn);
+            } catch (err) {
+              console.warn('No se pudo guardar telemetría en Supabase (puede que falte la tabla):', err);
+            }
+          }
+
           resolve(records);
         } catch (err) {
           reject(err);

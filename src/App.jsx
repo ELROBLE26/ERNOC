@@ -9,6 +9,7 @@ import { NfcOperModal } from './components/NfcOperModal';
 import { OperationsSummary } from './components/OperationsSummary';
 import { MaintenancePanel } from './components/MaintenancePanel';
 import { FuelPanel } from './components/FuelPanel';
+import { PlanilleroApp } from './components/planillero/PlanilleroApp';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
 import { useMaintenanceSchedule } from './hooks/useMaintenanceSchedule';
@@ -399,6 +400,11 @@ function App() {
       alert('Contraseña incorrecta.');
     }
   };
+
+  const isPlanilleroView = window.location.hash.includes('#/planillero');
+  if (isPlanilleroView) {
+    return <PlanilleroApp />;
+  }
 
   return (
     <main className="app-shell">
