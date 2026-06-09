@@ -68,7 +68,7 @@ export function useCuadratura() {
   };
 
   // Guarda el reporte de cierre de turno completo
-  const saveShiftQuadrature = async (surtidoresData, photosMap) => {
+  const saveShiftQuadrature = async (surtidoresData, tanquesData, photosMap) => {
     if (!isSupabaseConfigured) throw new Error('Supabase no está configurado');
     setLoading(true);
 
@@ -85,6 +85,7 @@ export function useCuadratura() {
       // 2. Guardar el reporte en la base de datos
       const payload = {
         surtidores_data: surtidoresData, // Arreglo con la cuadratura matemática
+        tanques_data: tanquesData,       // Arreglo con los pozos y mediciones
         photos: uploadedPhotos,          // URLs de las fotos
       };
 

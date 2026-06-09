@@ -32,6 +32,7 @@ export function CuadraturaPanel() {
           const isExpanded = expandedId === q.id;
           const fecha = new Date(q.fecha || q.created_at).toLocaleString('es-CL');
           const data = q.surtidores_data || [];
+          const tanquesData = q.tanques_data || [];
           const fotos = q.fotos_tanques || q.photos || [];
 
           // Calcular totales del turno
@@ -104,6 +105,23 @@ export function CuadraturaPanel() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Desglose por Tanque */}
+                  {tanquesData.length > 0 && (
+                    <>
+                      <h4 style={{ marginBottom: '12px', color: 'var(--gray-800)' }}>Desglose por Pozo (Tanque)</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                        {tanquesData.map(t => (
+                          <div key={t.tanque} style={{ background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ color: 'var(--navy-700)', fontSize: '0.9rem' }}>{t.tanque}</strong>
+                            <span style={{ fontWeight: 'bold', color: 'var(--gray-700)', fontSize: '0.9rem' }}>
+                              {t.litros_medidos} L
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
 
                   {/* Fotografías */}
                   <h4 style={{ marginBottom: '12px', color: 'var(--gray-800)', display: 'flex', alignItems: 'center', gap: '8px' }}>
