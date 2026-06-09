@@ -159,6 +159,7 @@ export function buildOperativePayload(terminal) {
     observaciones: '',
     ubicacion: terminal,
     terminal,
+    servicio: 'Operativo Libre',
   };
 }
 

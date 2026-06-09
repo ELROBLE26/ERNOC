@@ -292,6 +292,7 @@ function buildInitialForm(terminal, scheduledMaintenance) {
     detalle_panne: '',
     observaciones: '',
     ubicacion: terminal,
+    servicio: 'Operativo Libre',
   };
 }
 
