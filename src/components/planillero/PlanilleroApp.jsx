@@ -311,20 +311,33 @@ export function PlanilleroApp() {
                   </div>
                   
                   {info.data.length === 0 ? (
-                    <p className="empty-state">Sin cargas registradas</p>
+                    <div style={{ background: '#F8FAFC', border: '1px dashed #CBD5E1', borderRadius: '12px', padding: '24px', textAlign: 'center', color: '#94A3B8', fontSize: '0.9rem', fontWeight: '600' }}>
+                      Sin cargas registradas
+                    </div>
                   ) : (
-                    info.data.map(s => (
-                      <div key={s.name} className="surtidor-card">
-                        <div className="surtidor-icon">
-                          <Droplets size={24} />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                      {info.data.map(s => (
+                        <div key={s.name} className="estado-surtidor-card">
+                          <div className="esc-header">
+                            <div className="esc-icon">
+                              <Droplets size={20} />
+                            </div>
+                            <span className="esc-title">Surtidor {s.name.replace('SUR', '')}</span>
+                          </div>
+                          <div className="esc-body">
+                            <div className="esc-stat">
+                              <span className="esc-label">Despachos</span>
+                              <span className="esc-value">{s.count}</span>
+                            </div>
+                            <div className="esc-divider"></div>
+                            <div className="esc-stat">
+                              <span className="esc-label">Volumen Total</span>
+                              <span className="esc-value highlight">{s.litros.toFixed(1)} L</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="surtidor-info">
-                          <span className="surtidor-name">Surtidor {s.name}</span>
-                          <span className="surtidor-count">{s.count} cargas registradas</span>
-                          <span className="surtidor-litros">{s.litros.toFixed(1)} L Totales</span>
-                        </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               ))}

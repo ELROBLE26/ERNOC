@@ -726,3 +726,82 @@
   border: 2px solid var(--badge-ok-text) !important;
   color: var(--badge-ok-text) !important;
 }
+
+/* --- ESTADO DE SURTIDORES (ISLAS) --- */
+.estado-surtidor-card {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.estado-surtidor-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.esc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #E2E8F0;
+}
+
+.esc-icon {
+  background: #EBF4FF;
+  color: #3B82F6;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.esc-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1E293B;
+  letter-spacing: -0.01em;
+}
+
+.esc-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.esc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esc-label {
+  font-size: 0.7rem;
+  color: #64748B;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.esc-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.esc-value.highlight {
+  color: #059669;
+}
+
+.esc-divider {
+  width: 1px;
+  height: 32px;
+  background: #E2E8F0;
+}
