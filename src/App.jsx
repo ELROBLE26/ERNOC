@@ -9,6 +9,7 @@ import { NfcOperModal } from './components/NfcOperModal';
 import { OperationsSummary } from './components/OperationsSummary';
 import { MaintenancePanel } from './components/MaintenancePanel';
 import { FuelPanel } from './components/FuelPanel';
+import { CuadraturaPanel } from './components/CuadraturaPanel';
 import { PlanilleroApp } from './components/planillero/PlanilleroApp';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
@@ -472,6 +473,19 @@ function App() {
             </button>
             <button
               type="button"
+              id="nav-cuadratura"
+              className={`sidebar-link ${activeView === 'cuadratura' ? 'sidebar-link-active' : ''}`}
+              onClick={() => {
+                setActiveView('cuadratura');
+                setSidebarOpen(false);
+              }}
+              title="Cuadratura Islas"
+            >
+              <span className="sidebar-link-icon"><ShieldCheck size={14} /></span>
+              {!sidebarCollapsed && <span className="sidebar-link-text">Cuadratura Islas</span>}
+            </button>
+            <button
+              type="button"
               id="nav-configuracion"
               className={`sidebar-link ${activeView === 'configuracion' ? 'sidebar-link-active' : ''}`}
               onClick={() => {
@@ -656,6 +670,8 @@ function App() {
             />
           ) : activeView === 'combustible' ? (
             <FuelPanel rows={rows} fuelData={fuelData} onSaveCell={saveCell} />
+          ) : activeView === 'cuadratura' ? (
+            <CuadraturaPanel />
           ) : null}
 
           <NfcOperModal

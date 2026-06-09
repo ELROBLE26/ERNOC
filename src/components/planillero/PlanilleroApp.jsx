@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Fuel, ListOrdered, Droplets, ArrowLeft } from 'lucide-react';
+import { Fuel, ListOrdered, Droplets, ArrowLeft, ClipboardCheck } from 'lucide-react';
 import { useFleetData } from '../../hooks/useFleetData';
 import { useFuelData } from '../../hooks/useFuelData';
+import { CuadraturaCierre } from './CuadraturaCierre';
 import './Planillero.css';
 
 export function PlanilleroApp() {
@@ -263,6 +264,10 @@ export function PlanilleroApp() {
             </div>
           </div>
         )}
+
+        {activeTab === 'cierre' && (
+          <CuadraturaCierre />
+        )}
       </main>
 
       <nav className="planillero-bottom-nav">
@@ -274,6 +279,9 @@ export function PlanilleroApp() {
         </button>
         <button className={`nav-item ${activeTab === 'surtidores' ? 'active' : ''}`} onClick={() => setActiveTab('surtidores')}>
           <Droplets size={24} /><span>Islas</span>
+        </button>
+        <button className={`nav-item ${activeTab === 'cierre' ? 'active' : ''}`} onClick={() => setActiveTab('cierre')}>
+          <ClipboardCheck size={24} /><span>Cierre</span>
         </button>
       </nav>
     </div>
