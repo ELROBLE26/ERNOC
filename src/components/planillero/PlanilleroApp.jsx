@@ -57,14 +57,10 @@ export function PlanilleroApp() {
 
   // 1. Calcular Pendientes
   const pendientes = useMemo(() => {
-    const validUbicaciones = ['El Roble', 'La Reina', 'Maria Angelica', 'Los Agricultores'];
-    const ubicados = rows.filter(
-      (r) => validUbicaciones.includes(r.ubicacion)
-    );
-    
     const clean = (s) => (s || '').toString().trim().toLowerCase();
 
-    const sinCarga = ubicados.filter((bus) => {
+    // Mostrar todos los buses que no tengan carga, sin filtrar por una ubicación específica aquí
+    const sinCarga = rows.filter((bus) => {
       const rPpu = clean(bus.ppu);
       const rNum = clean(bus.numero);
       
@@ -96,7 +92,15 @@ export function PlanilleroApp() {
 
   const pendientesFiltrados = useMemo(() => {
     if (filtroTerminal === 'Todos') return pendientes;
-    return pendientes.filter(b => b.ubicacion === filtroTerminal);
+    
+    const normalize = (str) => (str || '').toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const filtroNorm = normalize(filtroTerminal);
+    
+    return pendientes.filter(b => {
+      const loc1 = normalize(b.ubicacion);
+      const loc2 = normalize(b.terminal);
+      return loc1.includes(filtroNorm) || loc2.includes(filtroNorm);
+    });
   }, [pendientes, filtroTerminal]);
 
   // 2. Orden de Carga con Buscador
