@@ -146,115 +146,128 @@ export function CuadraturaCierre() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {ESTRUCTURA_ISLAS.map(isla => (
-          <div key={isla.nombre} className="cuadratura-isla-card">
-            <div className="cuadratura-isla-header">
-              <h3>{isla.nombre}</h3>
+      <div className="advanced-isla-container">
+        {ESTRUCTURA_ISLAS.map((isla, index) => (
+          <div key={isla.nombre} className="advanced-isla-card">
+            <div className={`advanced-isla-header isla-${index + 1}`}>
+              <span className="advanced-isla-number">{index + 1}</span>
+              <div className="advanced-isla-title-box">
+                <h3>ISLA DE COMBUSTIBLE</h3>
+                <p>
+                  {isla.surtidores.map(s => `Surt. ${s}`).join(' - ')}
+                  {isla.tanques.length > 0 && ' - '}
+                  {isla.tanques.map(t => t.replace(' (30kL)', '').replace(' (Isla 2)', '').replace(' (Isla 3)', '')).join(' - ')}
+                </p>
+              </div>
             </div>
             
-            <div style={{ padding: '16px' }}>
+            <div className="advanced-isla-grid">
               
               {/* SURTIDORES */}
-              <h4 style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Surtidores</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-                {isla.surtidores.map(surtidor => {
-                  const inicial = numInicial[surtidor] || 0;
-                  const final = numFinal[surtidor] || 0;
-                  const consumo = final - inicial;
-                  const cargados = litrosPorSurtidor[surtidor];
-                  const desfase = consumo - cargados;
-                  const hasPhoto = !!fotos[`Surtidor ${surtidor}`];
-
-                  return (
-                    <div key={surtidor} className="cuadratura-surtidor-box">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
-                        <strong style={{ fontSize: '1.15rem', color: 'var(--text-main)', fontWeight: '800' }}>Surtidor {surtidor}</strong>
-                        <span style={{ fontSize: '0.8rem', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--accent-primary)', padding: '6px 10px', borderRadius: '8px', fontWeight: '700' }}>
-                          Cargados App: {cargados.toFixed(1)} L
-                        </span>
-                      </div>
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                        <div>
-                          <label className="cuadratura-input-label">Numeral Inicial</label>
-                          <input 
-                            type="number" placeholder="0.0" 
-                            className="cuadratura-input"
-                            onChange={e => handleNumChange(surtidor, 'inicial', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <label className="cuadratura-input-label">Numeral Final</label>
-                          <input 
-                            type="number" placeholder="0.0" 
-                            className="cuadratura-input"
-                            onChange={e => handleNumChange(surtidor, 'final', e.target.value)}
-                          />
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px dashed rgba(0,0,0,0.1)', marginBottom: '16px' }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500' }}>Consumo Reloj: <b style={{ color: 'var(--text-main)' }}>{consumo > 0 ? consumo.toFixed(1) : '0.0'} L</b></span>
-                        <span style={{ fontSize: '0.95rem', color: desfase === 0 ? 'var(--text-light)' : desfase > 0 ? 'var(--badge-crit-text)' : 'var(--badge-ok-text)', fontWeight: '800' }}>
-                          Desfase: {desfase > 0 ? '+' : ''}{desfase.toFixed(1)} L
-                        </span>
-                      </div>
-
-                      {/* Botón Foto Surtidor */}
-                      <label className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`}>
-                        <Camera size={20} />
-                        {hasPhoto ? 'Foto Surtidor Lista' : 'Tomar Foto Surtidor'}
-                        <input 
-                          type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
-                          onChange={e => {
-                            if (e.target.files && e.target.files[0]) {
-                              handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
-                            }
-                          }}
-                        />
-                      </label>
-
+              {isla.surtidores.map(surtidor => {
+                const hasPhoto = fotos[`Surtidor ${surtidor}`];
+                
+                return (
+                  <div key={surtidor} className="advanced-col">
+                    <div className="advanced-col-header">
+                      <span className="label">SURTIDOR</span>
+                      <span className="manual">MANUAL</span>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="advanced-col-main">
+                      <span className="big-number">{surtidor}</span>
+                      <div className="advanced-input-wrapper">
+                        <input 
+                          type="number" 
+                          placeholder="Inicial" 
+                          className="advanced-input-small"
+                          onChange={e => handleNumChange(surtidor, 'inicial', e.target.value)}
+                        />
+                        <input 
+                          type="number" 
+                          placeholder="Odómetro" 
+                          className="advanced-input"
+                          onChange={e => handleNumChange(surtidor, 'final', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="advanced-col-footer-text">ODÓMETRO</div>
+
+                    <label className="advanced-photo-zone">
+                      {hasPhoto ? (
+                        <>
+                          <img src={URL.createObjectURL(hasPhoto)} className="advanced-photo-img" alt={`Surtidor ${surtidor}`} />
+                          <span className="advanced-photo-tag">{surtidor}</span>
+                        </>
+                      ) : (
+                        <div className="advanced-photo-placeholder">
+                          <Camera size={24} />
+                          <p>Arrastrar foto<br/>o hacer clic</p>
+                        </div>
+                      )}
+                      <input 
+                        type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                        onChange={e => {
+                          if (e.target.files && e.target.files[0]) {
+                            handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                );
+              })}
 
               {/* POZOS / TANQUES */}
-              <h4 style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pozos</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {isla.tanques.map(tanque => {
-                  const hasPhoto = !!fotos[tanque];
-                  return (
-                    <div key={tanque} className="cuadratura-surtidor-box" style={{ marginBottom: 0 }}>
-                      <strong style={{ fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: '800', display: 'block', marginBottom: '12px' }}>{tanque}</strong>
-                      
-                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                          <input 
-                            type="number" placeholder="Litros Medidos" 
-                            className="cuadratura-input"
-                            onChange={e => handleLitrosPozoChange(tanque, e.target.value)}
-                          />
-                        </div>
-                        
-                        <label className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '12px' }}>
-                          <Camera size={18} />
-                          {hasPhoto ? 'Lista' : 'Tomar Foto'}
-                          <input 
-                            type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
-                            onChange={e => {
-                              if (e.target.files && e.target.files[0]) {
-                                handlePhotoChange(tanque, e.target.files[0]);
-                              }
-                            }}
-                          />
-                        </label>
+              {isla.tanques.map(tanque => {
+                const hasPhoto = fotos[tanque];
+                const isAdblue = tanque.toLowerCase().includes('adblue');
+                const nameParts = tanque.split(' ');
+                const displayNum = isAdblue ? 'Adblue' : (nameParts[1] || tanque);
+
+                return (
+                  <div key={tanque} className="advanced-col">
+                    <div className="advanced-col-header">
+                      <span className={`label ${isAdblue ? 'blue' : ''}`}>{isAdblue ? 'ADBLUE' : 'POZO'}</span>
+                      <span className="manual">MANUAL</span>
+                    </div>
+                    <div className="advanced-col-main">
+                      <span className="big-number" style={{ fontSize: isAdblue ? '1.5rem' : '2.2rem' }}>{displayNum}</span>
+                      <div className="advanced-input-wrapper" style={{ justifyContent: 'center' }}>
+                        <input 
+                          type="number" 
+                          placeholder={isAdblue ? 'Nº' : 'Nivel'} 
+                          className="advanced-input"
+                          style={{ padding: '16px 4px' }}
+                          onChange={e => handleLitrosPozoChange(tanque, e.target.value)}
+                        />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="advanced-col-footer-text">{isAdblue ? 'MEDICIÓN' : 'NIVEL'}</div>
+
+                    <label className="advanced-photo-zone">
+                      {hasPhoto ? (
+                        <>
+                          <img src={URL.createObjectURL(hasPhoto)} className="advanced-photo-img" alt={tanque} />
+                          <span className="advanced-photo-tag">{displayNum}</span>
+                        </>
+                      ) : (
+                        <div className="advanced-photo-placeholder">
+                          <Camera size={24} />
+                          <p>Arrastrar foto<br/>o hacer clic</p>
+                        </div>
+                      )}
+                      <input 
+                        type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                        onChange={e => {
+                          if (e.target.files && e.target.files[0]) {
+                            handlePhotoChange(tanque, e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                );
+              })}
 
             </div>
           </div>

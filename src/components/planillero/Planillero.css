@@ -342,92 +342,217 @@
   font-weight: 800;
 }
 
-/* --- CIERRE DE TURNO (CUADRATURA) --- */
-.cuadratura-isla-card {
-  background: var(--card-bg) !important;
-  border-radius: 20px !important;
-  border: var(--card-border) !important;
-  box-shadow: var(--card-shadow) !important;
+/* --- CIERRE DE TURNO (ADVANCED DESIGN) --- */
+.advanced-isla-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.advanced-isla-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.advanced-isla-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.advanced-isla-header.isla-1 { background: #EBF4FF; }
+.advanced-isla-header.isla-2 { background: #F0FDF4; }
+.advanced-isla-header.isla-3 { background: #FAF5FF; }
+
+.advanced-isla-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.advanced-isla-header.isla-1 .advanced-isla-number { color: #3B82F6; }
+.advanced-isla-header.isla-2 .advanced-isla-number { color: #22C55E; }
+.advanced-isla-header.isla-3 .advanced-isla-number { color: #A855F7; }
+
+.advanced-isla-title-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.advanced-isla-title-box h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1E293B;
+  letter-spacing: 1px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.advanced-isla-title-box p {
+  font-size: 0.75rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.advanced-isla-grid {
+  display: flex;
+  width: 100%;
+  border-top: 1px solid #E2E8F0;
+}
+
+.advanced-col {
+  flex: 1;
+  border-right: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.advanced-col:last-child {
+  border-right: none;
+}
+
+.advanced-col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 12px 4px 12px;
+}
+
+.advanced-col-header .label {
+  color: #F59E0B;
+  font-weight: 900;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+.advanced-col-header .label.blue {
+  color: #3B82F6;
+}
+
+.advanced-col-header .manual {
+  color: #94A3B8;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.advanced-col-main {
+  padding: 0 12px 12px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.advanced-col-main .big-number {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #0F172A;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.advanced-input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
   overflow: hidden;
 }
 
-.cuadratura-isla-header {
-  background: #f8fafc !important;
-  padding: 16px 20px !important;
-  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+.advanced-input-small {
+  width: 100%;
+  padding: 4px;
+  font-size: 0.7rem;
+  text-align: center;
+  border: none;
+  border-bottom: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #64748B;
+  outline: none;
 }
 
-.cuadratura-isla-header h3 {
-  margin: 0;
-  color: var(--text-main);
-  font-size: 1.3rem;
+.advanced-input {
+  width: 100%;
+  padding: 6px 4px;
+  font-size: 1rem;
   font-weight: 800;
+  text-align: center;
+  border: none;
+  color: #0F172A;
+  outline: none;
 }
 
-.cuadratura-surtidor-box {
-  background: white !important;
-  padding: 16px !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(0,0,0,0.08) !important;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.cuadratura-input-label {
-  display: block;
-  font-size: 0.75rem !important;
+.advanced-col-footer-text {
+  font-size: 0.6rem;
+  color: #94A3B8;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-muted) !important;
-  margin-bottom: 6px !important;
-  letter-spacing: 0.05em;
+  padding: 0 12px;
+  margin-top: -6px;
+  margin-bottom: 8px;
 }
 
-.cuadratura-input {
-  width: 100% !important;
-  padding: 12px 14px !important;
-  border-radius: 10px !important;
-  border: 1px solid rgba(0,0,0,0.15) !important;
-  font-size: 1rem !important;
-  font-weight: 600;
-  background: #f8fafc !important;
-  transition: all 0.2s ease;
+.advanced-photo-zone {
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.cuadratura-input:focus {
-  outline: none;
-  background: white !important;
-  border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+.advanced-photo-zone:hover {
+  background: #F1F5F9;
 }
 
-.cuadratura-btn-camara {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 14px !important;
-  border-radius: 12px !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
+.advanced-photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #CBD5E1;
 }
 
-.cuadratura-btn-camara:active {
-  transform: scale(0.96) !important;
+.advanced-photo-placeholder p {
+  font-size: 0.65rem;
+  color: #94A3B8;
+  text-align: center;
+  margin: 0;
+  padding: 0 8px;
 }
 
-.cuadratura-btn-camara.pending {
-  background: white !important;
-  border: 2px dashed rgba(0,0,0,0.2) !important;
-  color: var(--text-muted) !important;
+.advanced-photo-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.cuadratura-btn-camara.done {
-  background: var(--badge-ok-bg) !important;
-  border: 2px solid var(--badge-ok-text) !important;
-  color: var(--badge-ok-text) !important;
+.advanced-photo-tag {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #0F172A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .btn-guardar-cierre {
