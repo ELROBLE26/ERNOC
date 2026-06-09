@@ -8,6 +8,7 @@ import './Planillero.css';
 export function PlanilleroApp() {
   const [activeTab, setActiveTab] = useState('pendientes');
   const [searchCargas, setSearchCargas] = useState('');
+  const [filtroTerminal, setFiltroTerminal] = useState('Todos');
   const { rows } = useFleetData();
   const { fuelRecords, telemetryRecords, addManualRecord } = useFuelData();
 
@@ -54,10 +55,11 @@ export function PlanilleroApp() {
     }
   };
 
-  // 1. Calcular Pendientes por Terminal
+  // 1. Calcular Pendientes
   const pendientes = useMemo(() => {
+    const validUbicaciones = ['El Roble', 'La Reina', 'Maria Angelica', 'Los Agricultores'];
     const ubicados = rows.filter(
-      (r) => r.ubicacion === 'El Roble' || r.ubicacion === 'Los Agricultores'
+      (r) => validUbicaciones.includes(r.ubicacion)
     );
     
     const clean = (s) => (s || '').toString().trim().toLowerCase();
@@ -89,11 +91,13 @@ export function PlanilleroApp() {
       return { ...bus, pct };
     });
 
-    const elRoble = conTelemetria.filter(b => b.ubicacion === 'El Roble').sort((a, b) => (a.pct ?? 100) - (b.pct ?? 100));
-    const losAgri = conTelemetria.filter(b => b.ubicacion === 'Los Agricultores').sort((a, b) => (a.pct ?? 100) - (b.pct ?? 100));
-
-    return { elRoble, losAgri };
+    return conTelemetria.sort((a, b) => (a.pct ?? 100) - (b.pct ?? 100));
   }, [rows, fuelRecords, telemetryRecords]);
+
+  const pendientesFiltrados = useMemo(() => {
+    if (filtroTerminal === 'Todos') return pendientes;
+    return pendientes.filter(b => b.ubicacion === filtroTerminal);
+  }, [pendientes, filtroTerminal]);
 
   // 2. Orden de Carga con Buscador
   const ordenCarga = useMemo(() => {
@@ -200,46 +204,24 @@ export function PlanilleroApp() {
                 <AlertTriangle size={14} /> Mala Carga
               </button>
             </div>
-            
-            <h3 className="terminal-subtitle">El Roble ({pendientes.elRoble.length})</h3>
-            <div className="bus-list">
-              {pendientes.elRoble.length === 0 && <p className="empty-state">No hay buses pendientes.</p>}
-              {pendientes.elRoble.map(bus => (
-                <div key={bus.id} className="bus-card">
-                  <div className="bus-card-left">
-                    <span className="bus-cod" style={{ fontSize: '1.4rem' }}>{bus.ppu}</span>
-                    <span className="bus-ppu">N° {bus.numero || '-'} • {bus.tipo || 'Rígido'}</span>
-                  </div>
-                  <div className="bus-card-right" style={{ textAlign: 'right' }}>
-                    {bus.pct !== null ? (
-                      <span className={`fuel-badge ${bus.pct <= 30 ? 'critical' : bus.pct <= 50 ? 'warning' : 'ok'}`}>
-                        {bus.pct}%
-                      </span>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                        <span className="fuel-badge unknown">Pendiente</span>
-                        {bus.estado && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: bus.estado === 'Operativo' ? 'var(--badge-ok-text)' : 'var(--badge-crit-text)', fontWeight: '800' }}>
-                            {bus.estado === 'Operativo' ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
-                            {bus.estado}
-                          </span>
-                        )}
-                        {bus.ubicacion && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                            <MapPin size={10} /> {bus.ubicacion}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div style={{ marginBottom: '16px' }}>
+              <select 
+                className="planillero-search"
+                style={{ width: '100%', padding: '12px', background: 'white', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
+                value={filtroTerminal}
+                onChange={(e) => setFiltroTerminal(e.target.value)}
+              >
+                <option value="Todos">Todos ({pendientes.length})</option>
+                <option value="El Roble">El Roble</option>
+                <option value="La Reina">La Reina</option>
+                <option value="Maria Angelica">Maria Angelica</option>
+                <option value="Los Agricultores">Los Agricultores</option>
+              </select>
             </div>
-
-            <h3 className="terminal-subtitle mt-4">Los Agricultores ({pendientes.losAgri.length})</h3>
+            
             <div className="bus-list">
-              {pendientes.losAgri.length === 0 && <p className="empty-state">No hay buses pendientes.</p>}
-              {pendientes.losAgri.map(bus => (
+              {pendientesFiltrados.length === 0 && <p className="empty-state">No hay buses pendientes para esta selección.</p>}
+              {pendientesFiltrados.map(bus => (
                 <div key={bus.id} className="bus-card">
                   <div className="bus-card-left">
                     <span className="bus-cod" style={{ fontSize: '1.4rem' }}>{bus.ppu}</span>
