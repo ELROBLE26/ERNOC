@@ -343,7 +343,7 @@ function App() {
         try {
           for (const row of filteredRows) {
             await saveCell(row.id, {
-              estado: 'Operativo',
+              estado: 'OPERATIVO',
               oper: '',
               vidrio: '',
               mant: '',

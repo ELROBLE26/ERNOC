@@ -318,7 +318,7 @@ export function EditableTable({
                                 e.stopPropagation();
                                 if (window.confirm('¿Desea cambiar a operativo?')) {
                                   onSaveCell(row.id, {
-                                    estado: 'Operativo',
+                                    estado: 'OPERATIVO',
                                     oper: '',
                                     vidrio: '',
                                     mant: '',
