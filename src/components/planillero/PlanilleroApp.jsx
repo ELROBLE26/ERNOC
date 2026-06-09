@@ -9,7 +9,50 @@ export function PlanilleroApp() {
   const [activeTab, setActiveTab] = useState('pendientes');
   const [searchCargas, setSearchCargas] = useState('');
   const { rows } = useFleetData();
-  const { fuelRecords, telemetryRecords } = useFuelData();
+  const { fuelRecords, telemetryRecords, addManualRecord } = useFuelData();
+
+  // Estados para Mala Carga
+  const [showMalaCargaModal, setShowMalaCargaModal] = useState(false);
+  const [malaCargaForm, setMalaCargaForm] = useState({ ppu: '', surtidor: '', hora: '', litros: '' });
+  const [isSubmittingMC, setIsSubmittingMC] = useState(false);
+
+  const handleOpenMalaCarga = () => {
+    setMalaCargaForm({ ppu: '', surtidor: '', hora: '', litros: '' });
+    setShowMalaCargaModal(true);
+  };
+
+  const handleSubmitMalaCarga = async (e) => {
+    e.preventDefault();
+    if (!malaCargaForm.ppu || !malaCargaForm.surtidor || !malaCargaForm.hora || !malaCargaForm.litros) {
+      alert("Por favor completa todos los campos");
+      return;
+    }
+    
+    // Auto-formatear hora si le falta los 2 puntos (e.g. 1430 -> 14:30)
+    let horaFinal = malaCargaForm.hora;
+    if (horaFinal.length === 4 && !horaFinal.includes(':')) {
+      horaFinal = horaFinal.substring(0, 2) + ':' + horaFinal.substring(2);
+    }
+    
+    setIsSubmittingMC(true);
+    const busMatch = rows.find(r => r.ppu && r.ppu.replace(/\s/g,'').toLowerCase() === malaCargaForm.ppu.replace(/\s/g,'').toLowerCase());
+    
+    const record = {
+      ppu: malaCargaForm.ppu.toUpperCase(),
+      interno: busMatch ? busMatch.numero : '',
+      surtidor: malaCargaForm.surtidor,
+      litros: malaCargaForm.litros,
+      hora: horaFinal
+    };
+
+    const res = await addManualRecord(record);
+    setIsSubmittingMC(false);
+    if (res?.ok) {
+      setShowMalaCargaModal(false);
+    } else {
+      alert("Error guardando mala carga: " + (res?.error || 'Desconocido'));
+    }
+  };
 
   // 1. Calcular Pendientes por Terminal
   const pendientes = useMemo(() => {
@@ -148,7 +191,15 @@ export function PlanilleroApp() {
       <main className="planillero-content">
         {activeTab === 'pendientes' && (
           <div className="planillero-section">
-            <h2 className="section-title">Buses Pendientes</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 className="section-title" style={{ margin: 0 }}>Buses Pendientes</h2>
+              <button 
+                onClick={handleOpenMalaCarga}
+                style={{ background: 'var(--badge-crit-bg)', color: 'var(--badge-crit-text)', border: 'none', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <AlertTriangle size={14} /> Mala Carga
+              </button>
+            </div>
             
             <h3 className="terminal-subtitle">El Roble ({pendientes.elRoble.length})</h3>
             <div className="bus-list">
@@ -245,10 +296,13 @@ export function PlanilleroApp() {
                   <div className="bus-card-right">
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <span className="litros-text">{Number(f.litros).toFixed(1)} L</span>
-                      {f.pct !== null && (
+                      {f.pct !== null && f.pct !== undefined && (
                         <span className={`fuel-badge ${f.pct <= 30 ? 'critical' : f.pct <= 50 ? 'warning' : 'ok'}`} style={{ transform: 'scale(0.8)' }}>
                           {f.pct}%
                         </span>
+                      )}
+                      {f.esMalaCarga && (
+                        <span className="fuel-badge critical" style={{ transform: 'scale(0.8)' }}>MALA CARGA</span>
                       )}
                     </div>
                     <span className="hora-text">{f.hora || ''}</span>
@@ -311,6 +365,75 @@ export function PlanilleroApp() {
           <ClipboardCheck size={24} /><span>Cierre</span>
         </button>
       </nav>
+
+      {/* MODAL MALA CARGA */}
+      {showMalaCargaModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', animation: 'fadeIn 0.2s ease' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', color: 'var(--text-main)' }}>Agregar Mala Carga</h3>
+            <form onSubmit={handleSubmitMalaCarga} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="cuadratura-input-label">PPU (Patente)</label>
+                <input 
+                  type="text" 
+                  className="cuadratura-input" 
+                  placeholder="Ej: AB1234" 
+                  value={malaCargaForm.ppu} 
+                  onChange={e => setMalaCargaForm({...malaCargaForm, ppu: e.target.value.toUpperCase()})} 
+                  required 
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className="cuadratura-input-label">Surtidor</label>
+                  <input 
+                    type="text" 
+                    className="cuadratura-input" 
+                    placeholder="Ej: 114" 
+                    value={malaCargaForm.surtidor} 
+                    onChange={e => setMalaCargaForm({...malaCargaForm, surtidor: e.target.value})} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="cuadratura-input-label">Litros</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    className="cuadratura-input" 
+                    placeholder="Ej: 150" 
+                    value={malaCargaForm.litros} 
+                    onChange={e => setMalaCargaForm({...malaCargaForm, litros: e.target.value})} 
+                    required 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="cuadratura-input-label">Hora</label>
+                <input 
+                  type="text" 
+                  className="cuadratura-input" 
+                  placeholder="Ej: 14:30 o 1430" 
+                  value={malaCargaForm.hora} 
+                  onChange={e => {
+                    let val = e.target.value.replace(/[^0-9:]/g, '');
+                    if (val.length === 2 && !val.includes(':') && malaCargaForm.hora.length < 2) val += ':';
+                    setMalaCargaForm({...malaCargaForm, hora: val});
+                  }} 
+                  maxLength="5"
+                  required 
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button type="button" onClick={() => setShowMalaCargaModal(false)} style={{ flex: 1, padding: '12px', background: 'var(--badge-unk-bg)', color: 'var(--text-main)', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>Cancelar</button>
+                <button type="submit" disabled={isSubmittingMC} style={{ flex: 1, padding: '12px', background: '#e11d48', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>
+                  {isSubmittingMC ? 'Guardando...' : 'Confirmar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

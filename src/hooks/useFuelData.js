@@ -89,6 +89,35 @@ export function useFuelData() {
     }
   };
 
+  const addManualRecord = async (record) => {
+    if (!isSupabaseConfigured) return { ok: false, error: 'Supabase no configurado' };
+    try {
+      const payload = {
+        ppu: record.ppu,
+        interno: record.interno || '',
+        litros: record.litros,
+        surtidor: record.surtidor,
+        fecha: record.fecha || new Date().toISOString().split('T')[0],
+        hora: record.hora,
+        raw_data: { 
+          ppu: record.ppu, 
+          cod: record.interno, 
+          litros: record.litros, 
+          surtidor: record.surtidor, 
+          hora: record.hora, 
+          fecha: record.fecha || new Date().toISOString().split('T')[0],
+          esMalaCarga: true 
+        }
+      };
+      const { error } = await supabase.from('fuel_records').insert(payload);
+      if (error) throw error;
+      return { ok: true };
+    } catch (err) {
+      console.error('Error agregando mala carga:', err);
+      return { ok: false, error: err.message };
+    }
+  };
+
 
 
   /**
@@ -432,5 +461,6 @@ export function useFuelData() {
     parseFile,
     parseTelemetryFile,
     clearFuelData,
+    addManualRecord,
   };
 }
