@@ -637,3 +637,92 @@
   border-radius: var(--card-radius);
   border: 1px dashed rgba(0,0,0,0.1);
 }
+
+/* --- CIERRE DE TURNO (CUADRATURA) --- */
+.cuadratura-isla-card {
+  background: var(--card-bg) !important;
+  border-radius: 20px !important;
+  border: var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.cuadratura-isla-header {
+  background: #f8fafc !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+.cuadratura-isla-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.cuadratura-surtidor-box {
+  background: white !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.cuadratura-input-label {
+  display: block;
+  font-size: 0.75rem !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted) !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.05em;
+}
+
+.cuadratura-input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  font-size: 1rem !important;
+  font-weight: 600;
+  background: #f8fafc !important;
+  transition: all 0.2s ease;
+}
+
+.cuadratura-input:focus {
+  outline: none;
+  background: white !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+}
+
+.cuadratura-btn-camara {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.cuadratura-btn-camara:active {
+  transform: scale(0.96) !important;
+}
+
+.cuadratura-btn-camara.pending {
+  background: white !important;
+  border: 2px dashed rgba(0,0,0,0.2) !important;
+  color: var(--text-muted) !important;
+}
+
+.cuadratura-btn-camara.done {
+  background: var(--badge-ok-bg) !important;
+  border: 2px solid var(--badge-ok-text) !important;
+  color: var(--badge-ok-text) !important;
+}
