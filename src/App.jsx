@@ -615,6 +615,35 @@ function App() {
             bus={currentNfcBus}
             terminalFilter={workTerminal}
             scheduledMaintenance={scheduledMaintenance}
+            fuelLitros={
+              currentNfcBus
+                ? fuelRecords
+                    .filter((f) => {
+                      const clean = (s) => (s || '').toString().trim().toLowerCase();
+                      const rPpu = clean(currentNfcBus.ppu);
+                      const rCod = clean(currentNfcBus.cod);
+                      return (
+                        (f.ppu && rPpu && clean(f.ppu) === rPpu) ||
+                        (f.cod && rCod && clean(f.cod) === rCod) ||
+                        (f.interno && rCod && clean(f.interno) === rCod)
+                      );
+                    })
+                    .reduce((sum, f) => sum + (Number(f.litros) || 0), 0)
+                : 0
+            }
+            telemetryPct={
+              currentNfcBus
+                ? (fuelData.telemetryRecords.find((t) => {
+                    const clean = (s) => (s || '').toString().trim().toLowerCase();
+                    const rPpu = clean(currentNfcBus.ppu);
+                    const rCod = clean(currentNfcBus.cod);
+                    return (
+                      (t.codigoRegistro && rPpu && clean(t.codigoRegistro) === rPpu) ||
+                      (t.codigoInterno && rCod && clean(t.codigoInterno) === rCod)
+                    );
+                  })?.valor || null)
+                : null
+            }
             saving={nfcSaving}
             error={nfcError}
             onSave={handleNfcSave}

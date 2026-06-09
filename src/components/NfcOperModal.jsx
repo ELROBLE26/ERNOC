@@ -18,6 +18,8 @@ export function NfcOperModal({
   bus,
   terminalFilter,
   scheduledMaintenance,
+  fuelLitros,
+  telemetryPct,
   saving,
   error,
   onSave,
@@ -101,6 +103,8 @@ export function NfcOperModal({
     }));
   };
 
+  const hasFuel = fuelLitros > 0;
+
   return (
     <div className="modal-backdrop" role="presentation">
       <section
@@ -108,14 +112,10 @@ export function NfcOperModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="nfc-oper-title"
+        style={{ maxWidth: '600px' }}
       >
         <div className={`modal-accent-bar ${scheduledMaintenance ? 'maintenance-accent-bar' : ''}`} style={scheduledMaintenance ? { background: 'var(--warning-500)' } : {}} />
         <div className="modal-content">
-          {scheduledMaintenance && (
-            <div className="banner banner-warning" style={{ marginBottom: 16 }}>
-              <strong>¡Bus programado!</strong> {scheduledMaintenance.turno} — {scheduledMaintenance.detalle}
-            </div>
-          )}
           <div className="modal-header">
             <div>
               <h2 id="nfc-oper-title">Lectura NFC detectada</h2>
@@ -135,6 +135,53 @@ export function NfcOperModal({
             <DataPoint label="COD"      value={bus?.cod} />
             <DataPoint label="PPU"      value={bus?.ppu} />
             <DataPoint label="Terminal" value={form.terminal || 'Seleccionar'} />
+          </div>
+
+          {scheduledMaintenance && (
+            <div className="banner banner-warning" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div>
+                <strong>¡MANTENCIÓN PROGRAMADA! ({scheduledMaintenance.turno})</strong>
+              </div>
+              <div style={{ fontSize: '13px' }}>
+                <strong>Fecha:</strong> {new Date(scheduledMaintenance.fechaProgramada).toLocaleString('es-CL')}
+              </div>
+              <div style={{ fontSize: '13px' }}>
+                <strong>Observación:</strong> {scheduledMaintenance.detalle || 'Sin observaciones'}
+              </div>
+            </div>
+          )}
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            borderRadius: '8px',
+            backgroundColor: hasFuel ? 'var(--success-50)' : 'var(--danger-50)',
+            border: `2px solid ${hasFuel ? 'var(--success-200)' : 'var(--danger-200)'}`,
+            margin: '16px 0'
+          }}>
+            <strong style={{
+              fontSize: '28px',
+              color: hasFuel ? 'var(--success-700)' : 'var(--danger-700)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>
+              {hasFuel ? 'CARGADO' : 'PENDIENTE'}
+            </strong>
+            <div style={{ display: 'flex', gap: '24px', marginTop: '8px' }}>
+              {hasFuel && (
+                <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--success-800)' }}>
+                  {fuelLitros} L
+                </span>
+              )}
+              {telemetryPct && (
+                <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--navy-800)' }}>
+                  {telemetryPct}% Tanque
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="modal-grid nfc-status-grid">
@@ -166,12 +213,12 @@ export function NfcOperModal({
                   value={otNumber}
                   onChange={setOtNumber}
                 />
-                <TextArea
+                <TextInput
                   label="Detalle Panne"
                   value={form.detalle_panne}
                   onChange={(value) => updateField('detalle_panne', value)}
                 />
-                <TextArea
+                <TextInput
                   label="Observaciones"
                   value={form.observaciones}
                   onChange={(value) => updateField('observaciones', value)}
@@ -182,7 +229,7 @@ export function NfcOperModal({
 
           {error ? <p className="modal-error">⚠ {error}</p> : null}
 
-          <div className="modal-actions">
+          <div className="modal-actions" style={{ marginTop: '24px' }}>
             <button className="secondary-button" type="button" onClick={onCancel}>
               Cancelar
             </button>
