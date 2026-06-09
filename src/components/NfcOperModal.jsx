@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { PROBLEM_FIELDS, buildExclusiveProblemPatch } from '../utils/fleet';
 import { X } from 'lucide-react';
 
@@ -64,6 +64,11 @@ export function NfcOperModal({
     };
   }, [form, otNumber]);
 
+  const payloadRef = useRef(payload);
+  useEffect(() => {
+    payloadRef.current = payload;
+  }, [payload]);
+
   useEffect(() => {
     if (!open) return undefined;
 
@@ -75,18 +80,18 @@ export function NfcOperModal({
       }
       if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
-        onSave(payload);
+        onSave(payloadRef.current);
         return;
       }
       if (event.key === 'Enter') {
         event.preventDefault();
-        onSave(payload);
+        onSave(payloadRef.current);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [form.estado, onCancel, onSave, open, payload]);
+  }, [onCancel, onSave, open]);
 
   if (!open) return null;
 
@@ -133,7 +138,7 @@ export function NfcOperModal({
 
           <div className="nfc-bus-strip">
             <DataPoint label="COD"      value={bus?.cod} />
-            <DataPoint label="PPU"      value={bus?.ppu} />
+            <DataPoint label="PPU"      value={<span style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '1px' }}>{bus?.ppu}</span>} />
             <DataPoint label="Terminal" value={form.terminal || 'Seleccionar'} />
           </div>
 
