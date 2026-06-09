@@ -5,81 +5,137 @@ import { useFuelData } from '../../hooks/useFuelData';
 import './Planillero.css';
 
 export function PlanilleroApp() {
-  const [activeTab, setActiveTab] = useState('pendientes'); // 'pendientes', 'orden', 'surtidores'
+  const [activeTab, setActiveTab] = useState('pendientes');
+  const [searchCargas, setSearchCargas] = useState('');
   const { rows } = useFleetData();
   const { fuelRecords, telemetryRecords } = useFuelData();
 
   // 1. Calcular Pendientes por Terminal
   const pendientes = useMemo(() => {
-    // Filtrar buses que están en El Roble o Los Agricultores
     const ubicados = rows.filter(
       (r) => r.ubicacion === 'El Roble' || r.ubicacion === 'Los Agricultores'
     );
     
-    // Función de limpieza para comparación
     const clean = (s) => (s || '').toString().trim().toLowerCase();
 
-    // Encontrar buses que NO tienen carga
     const sinCarga = ubicados.filter((bus) => {
       const rPpu = clean(bus.ppu);
-      const rCod = clean(bus.cod);
-      const hasFuel = fuelRecords.some((f) => 
-        (f.ppu && rPpu && clean(f.ppu) === rPpu) ||
-        (f.cod && rCod && clean(f.cod) === rCod) ||
-        (f.interno && rCod && clean(f.interno) === rCod)
-      );
+      const rNum = clean(bus.numero);
+      
+      const hasFuel = fuelRecords.some((f) => {
+        const fPpu = clean(f.ppu);
+        const fInt = clean(f.interno || f.cod);
+        return (fPpu && rPpu && fPpu === rPpu) || (fInt && rNum && fInt === rNum);
+      });
       return !hasFuel;
     });
 
-    // Mapear el porcentaje de telemetría si existe
     const conTelemetria = sinCarga.map(bus => {
-      const rCod = clean(bus.cod);
+      const rPpu = clean(bus.ppu);
+      const rNum = clean(bus.numero);
       let pct = null;
       for (const t of telemetryRecords) {
-        if (t.cod && clean(t.cod) === rCod) {
-          pct = Number(t.pct);
+        const tPpu = clean(t.codigoRegistro || t.ppu);
+        const tInt = clean(t.codigoInterno || t.interno);
+        if ((tPpu && tPpu === rPpu) || (tInt && tInt === rNum)) {
+          pct = Number(t.valor ?? t.telemetry_pct);
           break;
         }
       }
       return { ...bus, pct };
     });
 
-    // Separar por terminal
     const elRoble = conTelemetria.filter(b => b.ubicacion === 'El Roble').sort((a, b) => (a.pct ?? 100) - (b.pct ?? 100));
     const losAgri = conTelemetria.filter(b => b.ubicacion === 'Los Agricultores').sort((a, b) => (a.pct ?? 100) - (b.pct ?? 100));
 
     return { elRoble, losAgri };
   }, [rows, fuelRecords, telemetryRecords]);
 
-  // 2. Orden de Carga (Invertido para ver el último primero, o en orden de carga)
+  // 2. Orden de Carga con Buscador
   const ordenCarga = useMemo(() => {
-    // Si asuminos que fuelRecords viene en el orden que se cargó, 
-    // podemos mostrarlo tal cual o revertirlo para ver el más reciente arriba.
-    return [...fuelRecords].reverse();
-  }, [fuelRecords]);
+    let list = [...fuelRecords].reverse();
+    
+    // Mapear porcentajes a las cargas también
+    const clean = (s) => (s || '').toString().trim().toLowerCase();
+    list = list.map(f => {
+      let pct = null;
+      const fPpu = clean(f.ppu);
+      const fInt = clean(f.interno || f.cod);
+      for (const t of telemetryRecords) {
+        const tPpu = clean(t.codigoRegistro || t.ppu);
+        const tInt = clean(t.codigoInterno || t.interno);
+        if ((tPpu && tPpu === fPpu) || (tInt && tInt === fInt)) {
+          pct = Number(t.valor ?? t.telemetry_pct);
+          break;
+        }
+      }
+      return { ...f, pct };
+    });
 
-  // 3. Estado de Surtidores
-  const surtidores = useMemo(() => {
-    const map = {};
-    for (const f of fuelRecords) {
-      const s = String(f.surtidor || 'Sin Asignar').trim();
-      if (!map[s]) map[s] = { count: 0, litros: 0 };
-      map[s].count += 1;
-      map[s].litros += Number(f.litros) || 0;
+    if (searchCargas.trim()) {
+      const q = searchCargas.toLowerCase();
+      list = list.filter(f => 
+        (f.ppu && f.ppu.toLowerCase().includes(q)) || 
+        (f.interno && String(f.interno).toLowerCase().includes(q))
+      );
     }
-    return Object.entries(map).map(([name, data]) => ({ name, ...data }));
+    return list;
+  }, [fuelRecords, telemetryRecords, searchCargas]);
+
+  // 3. Estado de Surtidores (Por Islas)
+  const islas = useMemo(() => {
+    // Islas definidas
+    const estructura = {
+      'Isla 1': {
+        surtidores: ['114', '115'],
+        tanques: ['Tanque 16 (30kL)', 'Tanque 17 (30kL)'],
+        data: []
+      },
+      'Isla 2': {
+        surtidores: ['116', '117'],
+        tanques: ['Tanque 118 (30kL)', 'AdBlue (4kL)'],
+        data: []
+      },
+      'Isla 3': {
+        surtidores: ['118', '119'],
+        tanques: ['Tanque 19 (30kL)', 'AdBlue (4kL)'],
+        data: []
+      },
+      'Otros / Sin Isla': {
+        surtidores: [],
+        tanques: [],
+        data: []
+      }
+    };
+
+    // Agrupar
+    for (const f of fuelRecords) {
+      const s = String(f.surtidor || '').trim();
+      let foundIsla = 'Otros / Sin Isla';
+      for (const [islaName, info] of Object.entries(estructura)) {
+        if (info.surtidores.includes(s)) {
+          foundIsla = islaName;
+          break;
+        }
+      }
+      
+      let surtidorObj = estructura[foundIsla].data.find(x => x.name === s);
+      if (!surtidorObj) {
+        surtidorObj = { name: s || 'Desconocido', count: 0, litros: 0 };
+        estructura[foundIsla].data.push(surtidorObj);
+      }
+      surtidorObj.count += 1;
+      surtidorObj.litros += Number(f.litros) || 0;
+    }
+
+    // Filtrar islas vacías
+    return Object.entries(estructura).filter(([_, info]) => info.data.length > 0 || info.surtidores.length > 0);
   }, [fuelRecords]);
 
   return (
     <div className="planillero-app">
       <header className="planillero-header">
-        <button 
-          className="back-to-desktop"
-          onClick={() => {
-            window.location.hash = '';
-            window.location.reload();
-          }}
-        >
+        <button className="back-to-desktop" onClick={() => { window.location.hash = ''; window.location.reload(); }}>
           <ArrowLeft size={20} />
         </button>
         <div className="planillero-brand">
@@ -99,8 +155,8 @@ export function PlanilleroApp() {
               {pendientes.elRoble.map(bus => (
                 <div key={bus.id} className="bus-card">
                   <div className="bus-card-left">
-                    <span className="bus-cod">{bus.cod}</span>
-                    <span className="bus-ppu">{bus.ppu}</span>
+                    <span className="bus-cod" style={{ fontSize: '1.4rem' }}>{bus.ppu}</span>
+                    <span className="bus-ppu">N° {bus.numero || '-'} • {bus.tipo || 'Rígido'}</span>
                   </div>
                   <div className="bus-card-right">
                     {bus.pct !== null ? (
@@ -121,8 +177,8 @@ export function PlanilleroApp() {
               {pendientes.losAgri.map(bus => (
                 <div key={bus.id} className="bus-card">
                   <div className="bus-card-left">
-                    <span className="bus-cod">{bus.cod}</span>
-                    <span className="bus-ppu">{bus.ppu}</span>
+                    <span className="bus-cod" style={{ fontSize: '1.4rem' }}>{bus.ppu}</span>
+                    <span className="bus-ppu">N° {bus.numero || '-'} • {bus.tipo || 'Rígido'}</span>
                   </div>
                   <div className="bus-card-right">
                     {bus.pct !== null ? (
@@ -141,18 +197,33 @@ export function PlanilleroApp() {
 
         {activeTab === 'orden' && (
           <div className="planillero-section">
-            <h2 className="section-title">Orden de Carga ({ordenCarga.length})</h2>
+            <h2 className="section-title">Orden de Carga ({fuelRecords.length})</h2>
+            <input 
+              type="text" 
+              className="planillero-search" 
+              placeholder="Buscar por PPU..." 
+              value={searchCargas}
+              onChange={(e) => setSearchCargas(e.target.value)}
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ccc', marginBottom: '8px', fontSize: '16px' }}
+            />
             <div className="bus-list">
-              {ordenCarga.length === 0 && <p className="empty-state">Aún no se ha cargado combustible.</p>}
+              {ordenCarga.length === 0 && <p className="empty-state">No hay coincidencias.</p>}
               {ordenCarga.map((f, i) => (
                 <div key={i} className="bus-card carga-card">
-                  <div className="carga-index">#{ordenCarga.length - i}</div>
+                  <div className="carga-index">#{fuelRecords.length - i}</div>
                   <div className="bus-card-left">
-                    <span className="bus-cod">{f.interno || f.cod}</span>
-                    <span className="bus-surtidor">Surtidor: {f.surtidor || '-'}</span>
+                    <span className="bus-cod" style={{ fontSize: '1.3rem' }}>{f.ppu || f.interno}</span>
+                    <span className="bus-surtidor">N° {f.interno} • Surtidor: {f.surtidor || '-'}</span>
                   </div>
                   <div className="bus-card-right">
-                    <span className="litros-text">{Number(f.litros).toFixed(1)} L</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className="litros-text">{Number(f.litros).toFixed(1)} L</span>
+                      {f.pct !== null && (
+                        <span className={`fuel-badge ${f.pct <= 30 ? 'critical' : f.pct <= 50 ? 'warning' : 'ok'}`} style={{ transform: 'scale(0.8)' }}>
+                          {f.pct}%
+                        </span>
+                      )}
+                    </div>
                     <span className="hora-text">{f.hora || ''}</span>
                   </div>
                 </div>
@@ -163,19 +234,30 @@ export function PlanilleroApp() {
 
         {activeTab === 'surtidores' && (
           <div className="planillero-section">
-            <h2 className="section-title">Estado de Surtidores</h2>
+            <h2 className="section-title">Estado de Islas</h2>
             <div className="surtidores-grid">
-              {surtidores.length === 0 && <p className="empty-state">No hay surtidores activos aún.</p>}
-              {surtidores.map((s, i) => (
-                <div key={i} className="surtidor-card">
-                  <div className="surtidor-icon">
-                    <Droplets size={24} />
+              {islas.map(([islaName, info]) => (
+                <div key={islaName} className="isla-card" style={{ background: 'white', borderRadius: '12px', padding: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-xs)' }}>
+                  <h3 style={{ fontSize: '1.1rem', margin: '0 0 8px 0', color: 'var(--navy-700)' }}>{islaName}</h3>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginBottom: '12px' }}>
+                    Tanques: {info.tanques.join(' / ')}
                   </div>
-                  <div className="surtidor-info">
-                    <span className="surtidor-name">{s.name}</span>
-                    <span className="surtidor-count">{s.count} buses cargados</span>
-                    <span className="surtidor-litros">{s.litros.toFixed(1)} Litros totales</span>
-                  </div>
+                  
+                  {info.data.length === 0 ? (
+                    <p className="empty-state" style={{ padding: '8px' }}>Sin cargas registradas</p>
+                  ) : (
+                    info.data.map(s => (
+                      <div key={s.name} style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--gray-100)', paddingTop: '8px', marginTop: '8px' }}>
+                        <div>
+                          <strong style={{ display: 'block', fontSize: '0.95rem' }}>Surtidor {s.name}</strong>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>{s.count} buses</span>
+                        </div>
+                        <div style={{ fontWeight: '800', color: 'var(--success-600)' }}>
+                          {s.litros.toFixed(1)} L
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               ))}
             </div>
@@ -184,26 +266,14 @@ export function PlanilleroApp() {
       </main>
 
       <nav className="planillero-bottom-nav">
-        <button 
-          className={`nav-item ${activeTab === 'pendientes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pendientes')}
-        >
-          <Fuel size={24} />
-          <span>Pendientes</span>
+        <button className={`nav-item ${activeTab === 'pendientes' ? 'active' : ''}`} onClick={() => setActiveTab('pendientes')}>
+          <Fuel size={24} /><span>Pendientes</span>
         </button>
-        <button 
-          className={`nav-item ${activeTab === 'orden' ? 'active' : ''}`}
-          onClick={() => setActiveTab('orden')}
-        >
-          <ListOrdered size={24} />
-          <span>Cargas</span>
+        <button className={`nav-item ${activeTab === 'orden' ? 'active' : ''}`} onClick={() => setActiveTab('orden')}>
+          <ListOrdered size={24} /><span>Cargas</span>
         </button>
-        <button 
-          className={`nav-item ${activeTab === 'surtidores' ? 'active' : ''}`}
-          onClick={() => setActiveTab('surtidores')}
-        >
-          <Droplets size={24} />
-          <span>Surtidores</span>
+        <button className={`nav-item ${activeTab === 'surtidores' ? 'active' : ''}`} onClick={() => setActiveTab('surtidores')}>
+          <Droplets size={24} /><span>Islas</span>
         </button>
       </nav>
     </div>
