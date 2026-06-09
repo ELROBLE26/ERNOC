@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -83,6 +83,32 @@ function App() {
       ].filter(Boolean).length,
     [filters],
   );
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        
+        setActiveView('operacion');
+        
+        setFilters((current) => ({
+          ...FILTER_DEFAULTS,
+          search: current.search
+        }));
+        
+        setTimeout(() => {
+          const searchInput = document.getElementById('filter-search');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+          }
+        }, 50);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleNfcRead = async (nfcUid, source = 'keyboard') => {
     if (!isSupabaseConfigured) {
@@ -308,6 +334,42 @@ function App() {
     }
   };
 
+  const handleClearReport = async () => {
+    const pwd = window.prompt('Ingrese la contraseña de seguridad para limpiar el reporte de operatividad:');
+    if (pwd === 'CLEAROPER2026') {
+      const confirmReset = window.confirm('¿Está seguro de que desea limpiar el reporte de operatividad? Esto afectará a todos los buses filtrados actualmente.');
+      if (confirmReset) {
+        setFormBusy(true);
+        try {
+          for (const row of filteredRows) {
+            await saveCell(row.id, {
+              estado: 'Operativo',
+              oper: '',
+              vidrio: '',
+              mant: '',
+              calidad: '',
+              adq: '',
+              aft: '',
+              sinies: '',
+              detalle_panne: '',
+              observaciones: '',
+              ubicacion: '',
+              servicio: ''
+            });
+          }
+          alert('Reporte limpiado correctamente.');
+          await loadFleet();
+        } catch (err) {
+          alert('Ocurrió un error al limpiar el reporte.');
+        } finally {
+          setFormBusy(false);
+        }
+      }
+    } else if (pwd !== null) {
+      alert('Contraseña incorrecta.');
+    }
+  };
+
   return (
     <main className="app-shell">
       <div className={`layout-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
@@ -431,16 +493,29 @@ function App() {
                   </span>
                 )}
                 {activeView === 'operacion' && filteredRows.length > 0 && (
-                  <button
-                    id="btn-export-csv"
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => downloadCsv(filteredRows)}
-                    title="Exportar tabla a CSV"
-                  >
-                    <Download size={13} />
-                    CSV
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      id="btn-clear-report"
+                      className="secondary-button"
+                      type="button"
+                      onClick={handleClearReport}
+                      title="Limpiar reporte de operatividad"
+                      style={{ color: 'var(--danger-600)', borderColor: 'var(--danger-200)', backgroundColor: 'var(--danger-50)' }}
+                    >
+                      <Eraser size={13} />
+                      Limpiar Reporte
+                    </button>
+                    <button
+                      id="btn-export-csv"
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => downloadCsv(filteredRows)}
+                      title="Exportar tabla a CSV"
+                    >
+                      <Download size={13} />
+                      CSV
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -531,7 +606,7 @@ function App() {
               rows={filteredRows}
             />
           ) : activeView === 'combustible' ? (
-            <FuelPanel rows={filteredRows} fuelData={fuelData} />
+            <FuelPanel rows={rows} fuelData={fuelData} />
           ) : null}
 
           <NfcOperModal

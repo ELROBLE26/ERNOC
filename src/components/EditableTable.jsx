@@ -14,6 +14,11 @@ const WIZARD_SERVICES = [
   "Apoyo Colo Colo", "Apoyo Lo Barnechea", "Apoyo Lo Echevers", "Apoyo a Voy"
 ];
 
+const UBICACIONES_INTERNAS = [
+  "Isla 1", "Isla 2", "3 Marias", "Isla 3", "Isla 4", "Isla 5",
+  "Frente a Taller", "Taller", "Vidrios", "Rodillos", "Bandejon"
+];
+
 const PROBLEM_COLUMNS = [
   { field: 'oper',    label: 'OPER' },
   { field: 'vidrio',  label: 'VID' },
@@ -144,6 +149,7 @@ export function EditableTable({
               <th>Detalle Panne</th>
               <th>Observaciones</th>
               <th>Ubicación</th>
+              <th>Ubicación Interna</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -297,6 +303,27 @@ export function EditableTable({
                             }}
                           />
                         )}
+                      </td>
+                      <td>
+                        <select
+                          className="fleet-select"
+                          style={{
+                            width: '100%',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--gray-200)',
+                            backgroundColor: 'white',
+                            color: 'var(--gray-900)',
+                            fontSize: '12px'
+                          }}
+                          value={row.ubicacion_interna || ''}
+                          onChange={(e) => onSaveCell(row.id, { ubicacion_interna: e.target.value })}
+                        >
+                          <option value="">-- Seleccionar --</option>
+                          {UBICACIONES_INTERNAS.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>

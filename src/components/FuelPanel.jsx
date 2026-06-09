@@ -20,6 +20,7 @@ import {
   GaugeCircle,
   X,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useFuelData } from '../hooks/useFuelData';
 
 /* ── Helpers ────────────────────────────────────────────────── */
@@ -33,8 +34,9 @@ const pct = (part, total) =>
 
 /* ── Component ──────────────────────────────────────────────── */
 export function FuelPanel({ rows, fuelData }) {
-  const { fuelRecords, lastUploadDate, fileName, parseFile, clearFuelData } = fuelData;
+  const { fuelRecords, telemetryRecords, lastUploadDate, fileName, telemetryFileName, parseFile, parseTelemetryFile, clearFuelData } = fuelData;
   const fileRef = useRef(null);
+  const telemetryRef = useRef(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +44,7 @@ export function FuelPanel({ rows, fuelData }) {
   const [sortField, setSortField] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const [terminalFilter, setTerminalFilter] = useState('Todos');
+  const [ubicacionFilter, setUbicacionFilter] = useState('Todas');
 
   /* ── File Upload ──────────────────────────────────────────── */
   const handleFileUpload = async (event) => {
@@ -56,6 +59,21 @@ export function FuelPanel({ rows, fuelData }) {
     } finally {
       setLoading(false);
       if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const handleTelemetryUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await parseTelemetryFile(file);
+    } catch (err) {
+      setError(err.message || 'Error al procesar el archivo de telemetría.');
+    } finally {
+      setLoading(false);
+      if (telemetryRef.current) telemetryRef.current.value = '';
     }
   };
 
@@ -169,6 +187,17 @@ export function FuelPanel({ rows, fuelData }) {
         matchedPpus.add(busPpu);
       }
 
+      let pctComb = '-';
+      if (telemetryRecords && telemetryRecords.length > 0) {
+        const tRecord = telemetryRecords.find(t => 
+           (t.codigoRegistro && t.codigoRegistro === busPpu) || 
+           (t.codigoInterno && t.codigoInterno === busCod)
+        );
+        if (tRecord && tRecord.valor !== undefined && tRecord.valor !== '') {
+          pctComb = tRecord.valor + '%';
+        }
+      }
+
       if (cargas.length > 0) {
         const totalLitros = cargas.reduce((sum, c) => sum + c.litros, 0);
         const surtidoresUsados = [...new Set(cargas.map((c) => c.surtidor))];
@@ -178,9 +207,10 @@ export function FuelPanel({ rows, fuelData }) {
           cargasCount: cargas.length,
           surtidores: surtidoresUsados.join(', '),
           promedioCarga: cargas.length > 0 ? totalLitros / cargas.length : 0,
+          pctComb,
         });
       } else {
-        noCargadosList.push(bus);
+        noCargadosList.push({ ...bus, pctComb });
       }
     });
 
@@ -207,7 +237,7 @@ export function FuelPanel({ rows, fuelData }) {
       noCargados: noCargadosList,
       desconocidos: desconocidosList,
     };
-  }, [fuelRecords, rows]);
+  }, [fuelRecords, rows, telemetryRecords]);
 
   /* ── Filter + Search + Sort ───────────────────────────────── */
   const applyFilters = (list) => {
@@ -224,6 +254,15 @@ export function FuelPanel({ rows, fuelData }) {
     if (terminalFilter !== 'Todos') {
       result = result.filter(
         (b) => b.terminal && b.terminal.toLowerCase() === terminalFilter.toLowerCase()
+      );
+    }
+    if (ubicacionFilter !== 'Todas') {
+      result = result.filter(
+        (b) => {
+          const ubi = b.ubicacion ? b.ubicacion.toLowerCase() : '';
+          const filterLower = ubicacionFilter.toLowerCase();
+          return ubi.includes(filterLower);
+        }
       );
     }
     if (sortField) {
@@ -269,30 +308,26 @@ export function FuelPanel({ rows, fuelData }) {
     return ['Todos', ...Array.from(set).sort()];
   }, [rows]);
 
-  /* ── CSV Export ────────────────────────────────────────────── */
-  const exportCsv = (data, name) => {
+  const ubicacionOptions = useMemo(() => {
+    const set = new Set();
+    rows.forEach((r) => { if (r.ubicacion && r.ubicacion.trim() !== '') set.add(r.ubicacion.trim()); });
+    return ['Todas', ...Array.from(set).sort()];
+  }, [rows]);
+
+  /* ── XLSX Export ────────────────────────────────────────────── */
+  const exportXlsx = (data, name) => {
     if (!data || data.length === 0) return;
     const keys = Object.keys(data[0]).filter((k) => !k.startsWith('_'));
-    const header = keys.join(',');
-    const body = data
-      .map((r) =>
-        keys
-          .map((k) => {
-            const v = r[k] ?? '';
-            return typeof v === 'string' && v.includes(',') ? `"${v}"` : v;
-          })
-          .join(',')
-      )
-      .join('\n');
-    const blob = new Blob([`\ufeff${header}\n${body}`], {
-      type: 'text/csv;charset=utf-8',
+    const rowsForExport = data.map(r => {
+      const obj = {};
+      keys.forEach(k => obj[k] = r[k]);
+      return obj;
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `combustible_${name}_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const worksheet = XLSX.utils.json_to_sheet(rowsForExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+    const filename = `combustible_${name}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
 
   /* ── RENDER: Empty state ──────────────────────────────────── */
@@ -357,10 +392,12 @@ export function FuelPanel({ rows, fuelData }) {
     <div className="fuel-panel">
       <FuelHeaderBar
         fileName={fileName}
+        telemetryFileName={telemetryFileName}
         lastUploadDate={lastUploadDate}
         recordCount={fuelRecords.length}
         onClear={clearFuelData}
         onReUpload={() => fileRef.current?.click()}
+        onTelemetryUpload={() => telemetryRef.current?.click()}
         loading={loading}
       />
       <input
@@ -368,6 +405,14 @@ export function FuelPanel({ rows, fuelData }) {
         type="file"
         accept=".xlsx,.xls,.html,.htm"
         onChange={handleFileUpload}
+        disabled={loading}
+        style={{ display: 'none' }}
+      />
+      <input
+        ref={telemetryRef}
+        type="file"
+        accept=".xlsx,.xls,.html,.htm"
+        onChange={handleTelemetryUpload}
         disabled={loading}
         style={{ display: 'none' }}
       />
@@ -470,6 +515,17 @@ export function FuelPanel({ rows, fuelData }) {
                 ))}
               </select>
             </div>
+            <div className="fuel-terminal-filter">
+              <Filter size={12} />
+              <select
+                value={ubicacionFilter}
+                onChange={(e) => setUbicacionFilter(e.target.value)}
+              >
+                {ubicacionOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -489,7 +545,7 @@ export function FuelPanel({ rows, fuelData }) {
               sortField={sortField}
               toggleSort={toggleSort}
               SortIcon={SortIcon}
-              onExport={() => exportCsv(filteredCargados, 'cargados')}
+              onExport={() => exportXlsx(filteredCargados, 'cargados')}
             />
           )}
           {activeTab === 'nocargados' && (
@@ -499,14 +555,14 @@ export function FuelPanel({ rows, fuelData }) {
               sortField={sortField}
               toggleSort={toggleSort}
               SortIcon={SortIcon}
-              onExport={() => exportCsv(filteredNoCargados, 'nocargados')}
+              onExport={() => exportXlsx(filteredNoCargados, 'nocargados')}
             />
           )}
           {activeTab === 'detalle' && (
             <DetalleTable
               records={fuelRecords}
               searchTerm={searchTerm}
-              onExport={() => exportCsv(fuelRecords, 'detalle_completo')}
+              onExport={() => exportXlsx(fuelRecords, 'detalle_completo')}
             />
           )}
         </div>
@@ -517,7 +573,7 @@ export function FuelPanel({ rows, fuelData }) {
 
 /* ── Sub-components ─────────────────────────────────────────── */
 
-function FuelHeaderBar({ fileName, lastUploadDate, recordCount, onClear, onReUpload, loading }) {
+function FuelHeaderBar({ fileName, telemetryFileName, lastUploadDate, recordCount, onClear, onReUpload, onTelemetryUpload, loading }) {
   return (
     <section className="panel fuel-header-panel">
       <div className="fuel-header-row">
@@ -534,16 +590,34 @@ function FuelHeaderBar({ fileName, lastUploadDate, recordCount, onClear, onReUpl
         </div>
         {(fileName || recordCount > 0) && (
           <div className="fuel-header-right">
-            <div className="fuel-file-pill">
-              <FileSpreadsheet size={12} />
-              <span>{fileName || 'Datos de Combustible'}</span>
-              <span className="fuel-file-meta">
-                {recordCount} registros · {lastUploadDate
-                  ? new Date(lastUploadDate).toLocaleString('es-CL')
-                  : '—'}
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="fuel-file-pill">
+                <FileSpreadsheet size={12} />
+                <span>{fileName || 'Datos de Combustible'}</span>
+                <span className="fuel-file-meta">
+                  {recordCount} registros · {lastUploadDate
+                    ? new Date(lastUploadDate).toLocaleString('es-CL')
+                    : '—'}
+                </span>
+              </div>
+              {telemetryFileName && (
+                <div className="fuel-file-pill" style={{ backgroundColor: 'var(--blue-50)', color: 'var(--blue-700)' }}>
+                  <FileSpreadsheet size={12} />
+                  <span>{telemetryFileName}</span>
+                  <span className="fuel-file-meta">Telemetría (%)</span>
+                </div>
+              )}
             </div>
             <div className="fuel-header-btns">
+              <button
+                className="secondary-button icon-button"
+                type="button"
+                onClick={onTelemetryUpload}
+                disabled={loading}
+              >
+                <UploadCloud size={14} />
+                <span>Subir Telemetría (%)</span>
+              </button>
               <button
                 className="secondary-button icon-button"
                 type="button"
@@ -551,7 +625,7 @@ function FuelHeaderBar({ fileName, lastUploadDate, recordCount, onClear, onReUpl
                 disabled={loading}
               >
                 <UploadCloud size={14} />
-                <span>Subir Nuevo</span>
+                <span>Subir Cargas</span>
               </button>
               <button
                 className="danger-button icon-button"
@@ -694,11 +768,16 @@ function CargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, onEx
               <th className="fuel-th-sortable" onClick={() => toggleSort('totalLitros')}>
                 Total Litros <SortIcon field="totalLitros" />
               </th>
+              <th className="fuel-th-sortable" onClick={() => toggleSort('pctComb')}>
+                % Comb. <SortIcon field="pctComb" />
+              </th>
               <th className="fuel-th-sortable" onClick={() => toggleSort('cargasCount')}>
                 N° Cargas <SortIcon field="cargasCount" />
               </th>
               <th>Promedio</th>
               <th>Surtidor(es)</th>
+              <th>Ubicación</th>
+              <th>Ubic. Interna</th>
             </tr>
           </thead>
           <tbody>
@@ -709,14 +788,17 @@ function CargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, onEx
                   <td className="fuel-td-mono">{bus.ppu}</td>
                   <td>{bus.terminal}</td>
                   <td className="fuel-td-highlight">{fmt(bus.totalLitros)} L</td>
+                  <td className="fuel-td-center"><strong>{bus.pctComb}</strong></td>
                   <td className="fuel-td-center">{bus.cargasCount}</td>
                   <td className="fuel-td-muted">{fmt(bus.promedioCarga)} L</td>
                   <td><span className="fuel-surtidor-pill">{bus.surtidores}</span></td>
+                  <td>{bus.ubicacion || '—'}</td>
+                  <td>{bus.ubicacion_interna || '—'}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="fuel-td-empty">
+                <td colSpan={10} className="fuel-td-empty">
                   No se encontraron resultados
                 </td>
               </tr>
@@ -757,6 +839,11 @@ function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, on
               <th>Terminal</th>
               <th>Zona</th>
               <th>Servicio</th>
+              <th className="fuel-th-sortable" onClick={() => toggleSort('pctComb')}>
+                % Comb. <SortIcon field="pctComb" />
+              </th>
+              <th>Ubicación</th>
+              <th>Ubic. Interna</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -769,6 +856,9 @@ function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, on
                   <td>{bus.terminal}</td>
                   <td>{bus.zona || '—'}</td>
                   <td>{bus.servicio || '—'}</td>
+                  <td className="fuel-td-center"><strong>{bus.pctComb}</strong></td>
+                  <td>{bus.ubicacion || '—'}</td>
+                  <td>{bus.ubicacion_interna || '—'}</td>
                   <td>
                     <span className={`status-badge ${
                       bus.estado === 'Operativo' ? 'tone-success' :
@@ -782,7 +872,7 @@ function NoCargadosTable({ data, totalFlota, sortField, toggleSort, SortIcon, on
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="fuel-td-empty">
+                <td colSpan={9} className="fuel-td-empty">
                   No se encontraron resultados
                 </td>
               </tr>

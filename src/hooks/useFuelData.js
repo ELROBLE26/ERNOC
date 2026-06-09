@@ -6,6 +6,9 @@ export function useFuelData() {
   const [fuelRecords, setFuelRecords] = useState([]);
   const [lastUploadDate, setLastUploadDate] = useState(null);
   const [fileName, setFileName] = useState(null);
+  
+  const [telemetryRecords, setTelemetryRecords] = useState([]);
+  const [telemetryFileName, setTelemetryFileName] = useState(null);
 
   const fetchRecords = async () => {
     if (!isSupabaseConfigured) return;
@@ -38,13 +41,14 @@ export function useFuelData() {
   }, []);
 
   const saveRecords = async (records, name) => {
+    setFuelRecords(records); // Optimistic UI
+    if (name) setFileName(name);
+    setLastUploadDate(new Date().toISOString());
+
     if (!isSupabaseConfigured) {
       console.warn('Supabase no configurado');
       return;
     }
-    
-    setFuelRecords(records); // Optimistic UI
-    if (name) setFileName(name);
     
     try {
       // Delete old records
@@ -66,14 +70,7 @@ export function useFuelData() {
     }
   };
 
-  const clearFuelData = async () => {
-    setFuelRecords([]);
-    setLastUploadDate(null);
-    setFileName(null);
-    if (isSupabaseConfigured) {
-      await supabase.from('fuel_records').delete().neq('ppu', 'impossible_delete_all');
-    }
-  };
+
 
   /**
    * Flexible column matcher — finds the best key in a row object
@@ -256,7 +253,19 @@ export function useFuelData() {
             const getVal = (key) => {
               if (!key) return '';
               const v = row[key];
-              return v != null ? v.toString().trim() : '';
+              if (v == null) return '';
+              if (v instanceof Date) {
+                const y = v.getFullYear();
+                if (y < 1900) {
+                  const hh = String(v.getHours()).padStart(2, '0');
+                  const mm = String(v.getMinutes()).padStart(2, '0');
+                  return `${hh}:${mm}`;
+                }
+                const d = String(v.getDate()).padStart(2, '0');
+                const m = String(v.getMonth() + 1).padStart(2, '0');
+                return `${d}/${m}/${y}`;
+              }
+              return v.toString().trim();
             };
             const getNum = (key) => {
               if (!key) return 0;
@@ -313,11 +322,75 @@ export function useFuelData() {
     });
   };
 
+
+  const parseTelemetryFile = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const allParsedRows = [];
+
+          for (const sheetName of workbook.SheetNames) {
+            const worksheet = workbook.Sheets[sheetName];
+            const sheetData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+            allParsedRows.push(...sheetData);
+          }
+
+          if (allParsedRows.length === 0) {
+            throw new Error('El archivo de telemetría está vacío.');
+          }
+
+          const records = allParsedRows.map(row => {
+            const getVal = (keyStr) => {
+              const k = Object.keys(row).find(key => key.toLowerCase().includes(keyStr.toLowerCase()));
+              return k ? row[k] : '';
+            };
+            return {
+              codigoInterno: getVal('codigoInterno'),
+              codigoRegistro: getVal('codigoRegistro').toString().toUpperCase().trim(),
+              valor: getVal('valor')
+            };
+          }).filter(r => r.codigoRegistro || r.codigoInterno);
+
+          if (records.length === 0) {
+            throw new Error('No se encontraron columnas válidas de telemetría (codigoInterno, codigoRegistro, valor).');
+          }
+
+          setTelemetryRecords(records);
+          setTelemetryFileName(file.name);
+          resolve(records);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Error leyendo el archivo de telemetría.'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const clearFuelData = async () => {
+    setFuelRecords([]);
+    setLastUploadDate(null);
+    setFileName(null);
+    setTelemetryRecords([]);
+    setTelemetryFileName(null);
+    if (isSupabaseConfigured) {
+      await supabase.from('fuel_records').delete().neq('ppu', 'impossible_delete_all');
+    }
+  };
+
   return {
     fuelRecords,
+    telemetryRecords,
     lastUploadDate,
     fileName,
+    telemetryFileName,
     parseFile,
+    parseTelemetryFile,
     clearFuelData,
   };
 }
