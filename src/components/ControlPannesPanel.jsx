@@ -163,10 +163,18 @@ export function ControlPannesPanel({ rows }) {
     return str;
   };
 
+  const removeAccents = (str) => {
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+
   const findKey = (row, partialMatches) => {
      const key = Object.keys(row).find(k => {
-       const cleanK = k.toLowerCase().replace(/\s+/g, '');
-       return partialMatches.some(p => cleanK.includes(p.toLowerCase().replace(/\s+/g, '')));
+       const cleanK = removeAccents(k.toLowerCase()).replace(/[^a-z0-9]/g, '');
+       return partialMatches.some(p => {
+         const cleanP = removeAccents(p.toLowerCase()).replace(/[^a-z0-9]/g, '');
+         return cleanK.includes(cleanP);
+       });
      });
      return key ? row[key] : null;
   };
@@ -209,8 +217,8 @@ export function ControlPannesPanel({ rows }) {
         });
 
         if (matchedBus) {
-          const rawEmision = findKey(row, ['emisión rtg', 'emision rtg', 'fecha emisión', 'fecha emision']);
-          const rawVencimiento = findKey(row, ['vencimiento rtg', 'fecha vencimiento']);
+          const rawEmision = findKey(row, ['emision']);
+          const rawVencimiento = findKey(row, ['vencimiento']);
 
           let tipoPanneStr = 'RTG';
           if (otData && otData.length > 0) {
