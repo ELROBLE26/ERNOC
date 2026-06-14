@@ -19,7 +19,7 @@ export const CREATE_DEFAULTS = {
   modelo: '',
   asignacion: '',
   tipo: 'RIGIDO',
-  estado: 'OPERATIVO',
+  estado: 'PENDIENTE',
   ubicacion: '',
   oper: '',
   vidrio: '',

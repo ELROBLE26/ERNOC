@@ -9,6 +9,7 @@ export function InlineField({
   multiline = false,
   className = '',
   placeholder = '',
+  inputId,
 }) {
   const [localValue, setLocalValue] = useState(value ?? '');
   const [error, setError] = useState('');
@@ -63,6 +64,7 @@ export function InlineField({
   return (
     <div className={`inline-field ${className}`}>
       <input
+        id={inputId}
         className="input-reset"
         value={localValue}
         placeholder={placeholder}

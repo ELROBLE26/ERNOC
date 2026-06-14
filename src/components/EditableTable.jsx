@@ -231,9 +231,10 @@ export function EditableTable({
                             </datalist>
                           </>
                         ) : (
-                          <InlineField
-                            value={row.servicio}
-                            onSave={(value) => onSaveCell(row.id, { servicio: value })}
+                          <ServiceInput
+                            row={row}
+                            onSaveCell={onSaveCell}
+                            wizardServices={WIZARD_SERVICES}
                           />
                         )}
                       </td>
@@ -292,6 +293,7 @@ export function EditableTable({
                           />
                         ) : (
                           <InlineField
+                            inputId={`ubicacion-${row.id}`}
                             value={row.ubicacion}
                             onSave={(value) => {
                               onSaveCell(row.id, { ubicacion: value });
@@ -368,6 +370,54 @@ function ReadOnlyCell({ value, strong = false }) {
   return (
     <div className={`read-only-cell ${strong ? 'read-only-strong' : ''}`}>
       {value || '—'}
+    </div>
+  );
+}
+
+function ServiceInput({ row, onSaveCell, wizardServices }) {
+  const [val, setVal] = useState(row.servicio || '');
+  
+  useEffect(() => {
+    setVal(row.servicio || '');
+  }, [row.servicio]);
+  
+  return (
+    <div className="inline-field">
+      <input
+        className="input-reset"
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={(e) => {
+          let finalVal = e.target.value;
+          const typedVal = finalVal.trim().toLowerCase();
+          if (typedVal === 'oper') finalVal = 'OPERATIVO LIBRE';
+          else if (typedVal) {
+            const match = wizardServices.find(s => s.toLowerCase().startsWith(typedVal));
+            if (match) finalVal = match;
+          }
+          setVal(finalVal);
+          if (finalVal !== (row.servicio || '')) onSaveCell(row.id, { servicio: finalVal });
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            let finalVal = val;
+            const typedVal = finalVal.trim().toLowerCase();
+            if (typedVal === 'oper') finalVal = 'OPERATIVO LIBRE';
+            else if (typedVal) {
+              const match = wizardServices.find(s => s.toLowerCase().startsWith(typedVal));
+              if (match) finalVal = match;
+            }
+            setVal(finalVal);
+            if (finalVal !== (row.servicio || '')) onSaveCell(row.id, { servicio: finalVal });
+            
+            const ubiInput = document.getElementById(`ubicacion-${row.id}`);
+            if (ubiInput) ubiInput.focus();
+          } else if (e.key === 'Enter') {
+            e.currentTarget.blur();
+          }
+        }}
+      />
     </div>
   );
 }
