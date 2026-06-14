@@ -12,7 +12,7 @@ const ESTRUCTURA_ISLAS = [
   {
     nombre: 'Isla 2',
     surtidores: ['116', '117'],
-    tanques: ['Pozo 118 (30kL)', 'AdBlue (Isla 2)']
+    tanques: ['Pozo 18 (30kL)', 'AdBlue (Isla 2)']
   },
   {
     nombre: 'Isla 3',
@@ -24,7 +24,7 @@ const ESTRUCTURA_ISLAS = [
 const SURTIDORES_LIST = ['114', '115', '116', '117', '118', '119'];
 const TANQUES_LIST = [
   'Pozo 16 (30kL)', 'Pozo 17 (30kL)',
-  'Pozo 118 (30kL)', 'AdBlue (Isla 2)',
+  'Pozo 18 (30kL)', 'AdBlue (Isla 2)',
   'Pozo 19 (30kL)', 'AdBlue (Isla 3)'
 ];
 

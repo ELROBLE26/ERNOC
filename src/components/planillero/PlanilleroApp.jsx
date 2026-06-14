@@ -145,7 +145,7 @@ export function PlanilleroApp() {
       },
       'Isla 2': {
         surtidores: ['116', '117'],
-        tanques: ['Pozo 118 (30kL)', 'AdBlue (4kL)'],
+        tanques: ['Pozo 18 (30kL)', 'AdBlue (4kL)'],
         data: []
       },
       'Isla 3': {
