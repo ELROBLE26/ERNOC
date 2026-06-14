@@ -343,7 +343,7 @@ export function ControlPannesPanel({ rows }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch', flexWrap: 'wrap' }}>
         {/* Tablas Resumen */}
         <div style={{ width: '350px', flexShrink: 0 }}>
           <TableBlock 
@@ -431,7 +431,7 @@ export function ControlPannesPanel({ rows }) {
                display: 'flex', 
                justifyContent: 'center', 
                alignItems: 'center',
-               backgroundColor: pastedImage ? '#000' : '#f7fafc',
+               backgroundColor: pastedImage ? '#fff' : '#f7fafc',
                cursor: 'pointer',
                overflow: 'hidden',
                position: 'relative',
