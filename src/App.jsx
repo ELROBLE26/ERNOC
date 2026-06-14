@@ -33,6 +33,7 @@ import {
   computeCounters,
   downloadXlsx,
   getFieldOptions,
+  normalizeText,
 } from './utils/fleet';
 
 function App() {
