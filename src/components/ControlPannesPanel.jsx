@@ -172,33 +172,33 @@ export function ControlPannesPanel({ rows }) {
   }, [rtgData, rows]);
 
   const TableBlock = ({ title, tipo, flotaTotal, fueraServicioOT, totalDisponibles, diferencia }) => (
-    <div style={{ marginBottom: '24px', border: '1px solid #000', fontFamily: 'sans-serif', fontSize: '12px' }}>
+    <div style={{ marginBottom: '10px', border: '1px solid #000', fontFamily: 'sans-serif', fontSize: '11px' }}>
       <div style={{ display: 'flex', backgroundColor: '#1a365d', color: '#fff', fontWeight: 'bold' }}>
-        <div style={{ flex: 1, padding: '8px', borderRight: '1px solid #000', textAlign: 'center', alignContent: 'center' }}>
+        <div style={{ flex: 1, padding: '4px', borderRight: '1px solid #000', textAlign: 'center', alignContent: 'center' }}>
           {title}
         </div>
-        <div style={{ width: '100px', padding: '8px', textAlign: 'center', backgroundColor: '#3182ce' }}>
-          <div style={{ fontSize: '10px', marginBottom: '4px', color: '#e2e8f0' }}>EL ROBLE</div>
+        <div style={{ width: '100px', padding: '4px', textAlign: 'center', backgroundColor: '#3182ce' }}>
+          <div style={{ fontSize: '9px', marginBottom: '2px', color: '#e2e8f0' }}>EL ROBLE</div>
           <div>US6</div>
         </div>
       </div>
       
       {/* FLOTA TOTAL */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#e2e8f0', fontWeight: 'bold' }}>
-        <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000' }}>FLOTA {tipo === 'RIGIDO' ? 'TOTAL' : 'ARTICULADOS'}</div>
-        <div style={{ width: '100px', padding: '4px 8px', textAlign: 'center' }}>{flotaTotal}</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>FLOTA {tipo === 'RIGIDO' ? 'TOTAL' : 'ARTICULADOS'}</div>
+        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center' }}>{flotaTotal}</div>
       </div>
 
       {/* FUERA DE SERVICIO (OT) */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#fff' }}>
-        <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000' }}>FUERA DE SERVICIO (OT)</div>
-        <div style={{ width: '100px', padding: '4px 8px', textAlign: 'center', fontWeight: 'bold' }}>{fueraServicioOT}</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>FUERA DE SERVICIO (OT)</div>
+        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold' }}>{fueraServicioOT}</div>
       </div>
 
       {/* Manual Rows */}
       {CATEGORIES.map(cat => (
         <div key={cat.key} style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: cat.color }}>
-          <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000' }}>{cat.label}</div>
+          <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>{cat.label}</div>
           <div style={{ width: '100px', padding: '0' }}>
             <input 
               type="number" 
@@ -213,13 +213,13 @@ export function ControlPannesPanel({ rows }) {
 
       {/* TOTAL DISPONIBLES */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#90cdf4', fontWeight: 'bold' }}>
-        <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000' }}>TOTAL DISPONIBLES</div>
-        <div style={{ width: '100px', padding: '4px 8px', textAlign: 'center' }}>{totalDisponibles}</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>TOTAL DISPONIBLES</div>
+        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center' }}>{totalDisponibles}</div>
       </div>
 
       {/* PO */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#fff' }}>
-        <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000', fontWeight: 'bold' }}>PO</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', fontWeight: 'bold' }}>PO</div>
         <div style={{ width: '100px', padding: '0' }}>
            <input 
               type="number" 
@@ -232,18 +232,18 @@ export function ControlPannesPanel({ rows }) {
 
       {/* DIFERENCIA */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#63b3ed', fontWeight: 'bold' }}>
-        <div style={{ flex: 1, padding: '4px 8px', borderRight: '1px solid #000' }}>DIFERENCIA</div>
-        <div style={{ width: '100px', padding: '4px 8px', textAlign: 'center' }}>{diferencia}</div>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>DIFERENCIA</div>
+        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center' }}>{diferencia}</div>
       </div>
     </div>
   );
 
   return (
-    <div className="panel-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px' }}>
-      <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="panel-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '10px' }}>
+      <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
         <div>
-          <h2>Proyección</h2>
-          <p>Análisis de flota operativa (OT y RTG)</p>
+          <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Proyección</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>Análisis de flota operativa (OT y RTG)</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <label className="secondary-button" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -259,9 +259,9 @@ export function ControlPannesPanel({ rows }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Tablas Resumen */}
-        <div style={{ width: '400px', flexShrink: 0 }}>
+        <div style={{ width: '350px', flexShrink: 0 }}>
           <TableBlock 
             title="CONTROL DE FLOTA RIGIDO" 
             tipo="RIGIDO"
@@ -281,49 +281,49 @@ export function ControlPannesPanel({ rows }) {
         </div>
 
         {/* Tabla RTG Vencidas */}
-        <div style={{ flex: 1, minWidth: '600px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <h3 style={{ margin: 0, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               <Info size={16} style={{ color: 'var(--primary-600)' }}/>
-               Buses con RTG Vencida (según archivo)
+        <div style={{ flex: 1, minWidth: '400px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+           <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <h3 style={{ margin: 0, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+               <Info size={14} style={{ color: 'var(--primary-600)' }}/>
+               Buses con RTG Vencida
              </h3>
-             <span className="badge" style={{ backgroundColor: 'var(--danger-100)', color: 'var(--danger-700)', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+             <span className="badge" style={{ backgroundColor: 'var(--danger-100)', color: 'var(--danger-700)', padding: '2px 6px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}>
                {rtgVencidas.length} registros
              </span>
            </div>
            
-           <div style={{ overflowX: 'auto' }}>
-             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'sans-serif' }}>
-               <thead style={{ backgroundColor: '#3182ce', color: '#fff' }}>
+           <div style={{ overflowX: 'auto', maxHeight: '500px', overflowY: 'auto' }}>
+             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', fontFamily: 'sans-serif' }}>
+               <thead style={{ backgroundColor: '#3182ce', color: '#fff', position: 'sticky', top: 0 }}>
                  <tr>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>N° Interno Bus</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Patente Bus</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Taller</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>TIPO</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Fecha Emisión RTG</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Fecha Vencimiento RTG</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Dias Para Vencimiento RTG</th>
-                   <th style={{ padding: '8px', border: '1px solid #cbd5e0', textAlign: 'center' }}>TIPO PANNE</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>N° Interno</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Patente</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Taller</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>TIPO</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Emisión RTG</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Vencimiento RTG</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>Dias</th>
+                   <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>TIPO PANNE</th>
                  </tr>
                </thead>
                <tbody>
                  {rtgVencidas.length === 0 ? (
                    <tr>
-                     <td colSpan="8" style={{ padding: '20px', textAlign: 'center', color: '#718096' }}>
+                     <td colSpan="8" style={{ padding: '10px', textAlign: 'center', color: '#718096' }}>
                        No hay datos de RTG o no hay buses vencidos en la flota. Sube el Excel de RTG para analizar.
                      </td>
                    </tr>
                  ) : (
                    rtgVencidas.map((b, idx) => (
                      <tr key={idx} style={{ backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.interno}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.patente}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.taller}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.tipo}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.fechaEmision}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center', backgroundColor: '#fc8181', color: '#fff', fontWeight: 'bold' }}>{b.fechaVencimiento}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.dias}</td>
-                       <td style={{ padding: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.tipoPanne}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.interno}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.patente}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.taller}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.tipo}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.fechaEmision}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center', backgroundColor: '#fc8181', color: '#fff', fontWeight: 'bold' }}>{b.fechaVencimiento}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.dias}</td>
+                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.tipoPanne}</td>
                      </tr>
                    ))
                  )}
