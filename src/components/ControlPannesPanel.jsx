@@ -21,19 +21,26 @@ export function ControlPannesPanel({ rows }) {
     ARTICULADO: CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat.key]: 0 }), {}),
   });
   
-  const [po, setPo] = useState({
-    RIGIDO: 182,
-    ARTICULADO: 60,
-  });
+  const [po, setPo] = useState(() => JSON.parse(localStorage.getItem('ernoc_po')) || { RIGIDO: 0, ARTICULADO: 0 });
 
   const [otData, setOtData] = useState([]);
   const [rtgData, setRtgData] = useState([]);
   const [pastedImage, setPastedImage] = useState(null);
+  const [manualPannes, setManualPannes] = useState({});
 
-  // Auto calculate FUERA DE SERVICIO (OT)
+  useEffect(() => {
+    const validBusIds = new Set(rows.map(r => r.cod || r.ppu));
+    setManualPannes(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(id => {
+        if (!validBusIds.has(id)) delete next[id];
+      });
+      return next;
+    });
+  }, [rows]);
+
   const fueraServicioOT = useMemo(() => {
     const counts = { RIGIDO: 0, ARTICULADO: 0 };
-    if (!otData.length || !rows.length) return counts;
 
     // We only count buses that are in the OT file AND in our system rows
     // OT file usually has 'PPU' or 'Código'
@@ -200,58 +207,79 @@ export function ControlPannesPanel({ rows }) {
     if (!rtgData.length || !rows.length) return [];
     
     const results = [];
+    
+    // Live date calculation helper
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const parseDateString = (ddmmyyyy) => {
+      if (!ddmmyyyy) return null;
+      const parts = ddmmyyyy.split('/');
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+      }
+      return null;
+    };
+
     rtgData.forEach(row => {
-      // "Dias Para Vencimiento RTG" is typically negative when expired
-      const daysStr = row['Dias Para Vencimiento RTG'] || row['Días Para Vencimiento RTG'] || '0';
-      const days = parseInt(daysStr, 10) || 0;
+      const ppuRaw = (row['Patente Bus'] || row['Patente'] || row['PPU'] || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const codRaw = (row['N° Interno Bus'] || row['Código'] || '').toString().trim();
       
-      if (days < 0) {
-        const ppuRaw = (row['Patente Bus'] || row['Patente'] || row['PPU'] || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
-        const codRaw = (row['N° Interno Bus'] || row['Código'] || '').toString().trim();
+      const matchedBus = rows.find(b => {
+        const bPpu = (b.ppu || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const bCod = (b.cod || '').toString().trim();
+        return (bPpu && bPpu === ppuRaw) || (bCod && bCod === codRaw);
+      });
+
+      if (matchedBus) {
+        const rawEmision = findKey(row, ['emision']);
+        const rawVencimiento = findKey(row, ['vencimiento']);
         
-        // Find in fleet
-        const matchedBus = rows.find(b => {
-          const bPpu = (b.ppu || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          const bCod = (b.cod || '').toString().trim();
-          return (bPpu && bPpu === ppuRaw) || (bCod && bCod === codRaw);
-        });
+        const fechaEmision = formatDateToDDMMYYYY(rawEmision);
+        const fechaVencimiento = formatDateToDDMMYYYY(rawVencimiento);
+        
+        // Calculate live days
+        let liveDays = 0;
+        const vDate = parseDateString(fechaVencimiento);
+        if (vDate) {
+          liveDays = Math.round((vDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        } else {
+          // Fallback to what's in the file if date parsing failed
+          const daysStr = row['Dias Para Vencimiento RTG'] || row['Días Para Vencimiento RTG'] || '0';
+          liveDays = parseInt(daysStr, 10) || 0;
+        }
 
-        if (matchedBus) {
-          const rawEmision = findKey(row, ['emision']);
-          const rawVencimiento = findKey(row, ['vencimiento']);
-
-          let tipoPanneStr = 'RTG';
-          if (otData && otData.length > 0) {
-            const otBusMatch = otData.find(otRow => {
-              const rPpu = (otRow['PPU'] || otRow['Patente'] || otRow['Patente Bus'] || otRow['ppu'] || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
-              const rCod = (otRow['Código'] || otRow['N° Interno Bus'] || otRow['Nro interno'] || otRow['N° interno'] || '').toString().trim();
-              const bPpu = (matchedBus.ppu || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-              const bCod = (matchedBus.cod || '').toString().trim();
-              return (bPpu && bPpu === rPpu) || (bCod && bCod === rCod);
-            });
-            if (otBusMatch) {
-              const panneVal = findKey(otBusMatch, ['tipo panne', 'tipo de panne', 'panne', 'falla', 'motivo', 'estado', 'observacion', 'detalle']);
-              if (panneVal) {
-                tipoPanneStr = panneVal;
-              }
-            }
-          }
-
+        if (liveDays < 0) {
           results.push({
             interno: matchedBus.cod,
             patente: matchedBus.ppu,
             taller: matchedBus.terminal || 'No asignado',
             tipo: matchedBus.tipo,
-            fechaEmision: formatDateToDDMMYYYY(rawEmision),
-            fechaVencimiento: formatDateToDDMMYYYY(rawVencimiento),
-            dias: days,
-            tipoPanne: tipoPanneStr,
+            fechaEmision,
+            fechaVencimiento,
+            dias: liveDays
           });
         }
       }
     });
     return results;
-  }, [rtgData, rows, otData]);
+  }, [rtgData, rows]);
+
+  // Cleanup manual pannes for buses that are no longer in the list
+  useEffect(() => {
+    setManualPannes(prev => {
+      const next = { ...prev };
+      let changed = false;
+      const currentInternos = new Set(rtgVencidas.map(b => b.interno.toString()));
+      Object.keys(next).forEach(k => {
+        if (!currentInternos.has(k)) {
+          delete next[k];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [rtgVencidas]);
 
   const TableBlock = ({ title, tipo, flotaTotal, fueraServicioOT, totalDisponibles, diferencia }) => (
     <div style={{ marginBottom: '10px', border: '1px solid #000', fontFamily: 'sans-serif', fontSize: '11px' }}>
@@ -348,6 +376,15 @@ export function ControlPannesPanel({ rows }) {
             Subir Excel RTG
             <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleRTGUpload} />
           </label>
+          {rtgData.length > 0 && (
+            <button 
+              onClick={() => { setRtgData([]); setManualPannes({}); }} 
+              className="danger-button" 
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fc8181', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              Limpiar Tabla
+            </button>
+          )}
         </div>
       </div>
 
@@ -418,7 +455,15 @@ export function ControlPannesPanel({ rows }) {
                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.fechaEmision}</td>
                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center', backgroundColor: '#fc8181', color: '#fff', fontWeight: 'bold' }}>{b.fechaVencimiento}</td>
                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.dias}</td>
-                       <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.tipoPanne}</td>
+                       <td style={{ padding: '0px', border: '1px solid #e2e8f0', textAlign: 'center', backgroundColor: '#fff' }}>
+                         <input 
+                           type="text" 
+                           value={manualPannes[b.interno] !== undefined ? manualPannes[b.interno] : ''} 
+                           onChange={(e) => setManualPannes(prev => ({ ...prev, [b.interno]: e.target.value }))}
+                           placeholder="RTG"
+                           style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', outline: 'none', padding: '4px', fontSize: '10px' }}
+                         />
+                       </td>
                      </tr>
                    ))
                  )}
