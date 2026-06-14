@@ -276,7 +276,17 @@ export function ControlPannesPanel({ rows }) {
   );
 
   return (
-    <div className="panel-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '10px' }}>
+    <div className="panel-container no-spinners" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '10px' }}>
+      <style>{`
+        .no-spinners input[type="number"]::-webkit-inner-spin-button,
+        .no-spinners input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .no-spinners input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
         <div>
           <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Proyección</h2>
