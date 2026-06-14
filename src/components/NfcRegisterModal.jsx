@@ -14,7 +14,7 @@ export function NfcRegisterModal({
 }) {
   const [form, setForm] = useState({
     id: null,
-    cod: nfcUid || '',
+    cod: '',
     ppu: '',
     numero: '',
     modelo: '',
@@ -26,7 +26,7 @@ export function NfcRegisterModal({
     if (open) {
       setForm({
         id: null,
-        cod: nfcUid || '',
+        cod: '',
         ppu: '',
         numero: '',
         modelo: '',
@@ -76,14 +76,14 @@ export function NfcRegisterModal({
           };
         }
       }
-    } else if (field === 'numero' && value) {
-      const match = rows.find(r => String(r.numero) === String(value));
+    } else if (field === 'cod' && value) {
+      const match = rows.find(r => String(r.cod).trim() === String(value).trim());
       if (match) {
         nextForm = {
           ...nextForm,
           id: match.id,
-          cod: match.cod || nextForm.cod,
           ppu: match.ppu || nextForm.ppu,
+          numero: match.numero || nextForm.numero,
           modelo: match.modelo || nextForm.modelo,
           asignacion: match.asignacion || nextForm.asignacion,
           tipo: match.tipo || nextForm.tipo,
@@ -140,7 +140,7 @@ export function NfcRegisterModal({
           <form className="create-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
             <FormField
               id="reg-bus-cod"
-              label="Código bus"
+              label="N° interno / Código bus"
               value={form.cod}
               onChange={(value) => handleChange('cod', value)}
               required
@@ -151,13 +151,6 @@ export function NfcRegisterModal({
               value={form.ppu}
               onChange={(value) => handleChange('ppu', value)}
               required
-            />
-            <FormField
-              id="reg-bus-numero"
-              label="N° interno"
-              type="number"
-              value={form.numero}
-              onChange={(value) => handleChange('numero', value)}
             />
             <FormField
               id="reg-bus-modelo"
