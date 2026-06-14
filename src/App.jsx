@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight, BarChart2, FileCheck } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -12,6 +12,7 @@ import { FuelPanel } from './components/FuelPanel';
 import { CuadraturaPanel } from './components/CuadraturaPanel';
 import { ControlPannesPanel } from './components/ControlPannesPanel';
 import { PlanilleroApp } from './components/planillero/PlanilleroApp';
+import { DocumentReviewPanel } from './components/DocumentReviewPanel';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
 import { useMaintenanceSchedule } from './hooks/useMaintenanceSchedule';
@@ -528,6 +529,19 @@ function App() {
             </button>
             <button
               type="button"
+              id="nav-documentacion"
+              className={`sidebar-link ${activeView === 'documentacion' ? 'sidebar-link-active' : ''}`}
+              onClick={() => {
+                setActiveView('documentacion');
+                setSidebarOpen(false);
+              }}
+              title="Revisión Documentación"
+            >
+              <span className="sidebar-link-icon"><FileCheck size={14} /></span>
+              {!sidebarCollapsed && <span className="sidebar-link-text">Revisión Documentación</span>}
+            </button>
+            <button
+              type="button"
               id="nav-configuracion"
               className={`sidebar-link ${activeView === 'configuracion' ? 'sidebar-link-active' : ''}`}
               onClick={() => {
@@ -716,6 +730,8 @@ function App() {
             <CuadraturaPanel />
           ) : activeView === 'control-pannes' ? (
             <ControlPannesPanel rows={filteredRows} />
+          ) : activeView === 'documentacion' ? (
+            <DocumentReviewPanel rows={rows} />
           ) : null}
 
           <NfcOperModal

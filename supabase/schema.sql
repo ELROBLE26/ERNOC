@@ -126,3 +126,44 @@ create index if not exists reporte_oper_nfc_log_nfc_uid_idx
 
 create index if not exists reporte_oper_nfc_log_created_at_idx
   on public.reporte_oper_nfc_log (created_at desc);
+
+create table if not exists public.revision_documentos (
+  id uuid primary key default gen_random_uuid(),
+  ppu text not null unique,
+  cod text not null,
+  terminal text,
+  permiso_circulacion boolean default false,
+  soap boolean default false,
+  revision_tecnica boolean default false,
+  revision_gases boolean default false,
+  certificado_recorrido boolean default false,
+  certificado_inscripcion boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.revision_documentos disable row level security;
+
+create index if not exists revision_documentos_ppu_idx on public.revision_documentos (ppu);
+create index if not exists revision_documentos_cod_idx on public.revision_documentos (cod);
+
+drop trigger if exists trg_revision_documentos_updated_at on public.revision_documentos;
+
+create trigger trg_revision_documentos_updated_at
+before update on public.revision_documentos
+for each row
+execute function public.set_reporte_oper_updated_at();
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'revision_documentos'
+  ) then
+    alter publication supabase_realtime add table public.revision_documentos;
+  end if;
+end;
+$$;
