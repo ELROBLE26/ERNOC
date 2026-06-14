@@ -104,7 +104,7 @@ export function ControlPannesPanel({ rows }) {
             }
           }
 
-          const sheetData = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, raw: false });
+          const sheetData = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, raw: false, defval: "" });
           resolve(sheetData);
         } catch (err) {
           reject(err);
@@ -233,9 +233,12 @@ export function ControlPannesPanel({ rows }) {
       });
 
       if (matchedBus) {
-        const keys = Object.keys(row);
-        const keyEmision = findColumnKey(keys, ['Emision RTG', 'Fecha Emision RTG', 'Emision']);
-        const keyVencimiento = findColumnKey(keys, ['Vencimiento RTG', 'Fecha Vencimiento RTG', 'Vencimiento']);
+        // En lugar de buscar por nombre (que falla si el archivo dice "Vencimiento anterior"), 
+        // usamos explícitamente la Columna D (index 3) para Emisión y Columna E (index 4) para Vencimiento
+        // tomando los headers del primer registro.
+        const headers = Object.keys(rtgData[0]);
+        const keyEmision = headers[3];
+        const keyVencimiento = headers[4];
         
         const rawEmision = keyEmision ? row[keyEmision] : null;
         const rawVencimiento = keyVencimiento ? row[keyVencimiento] : null;
