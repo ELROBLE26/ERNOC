@@ -28,17 +28,81 @@ const TANQUES_LIST = [
   'Pozo 19 (30kL)', 'AdBlue (Isla 3)'
 ];
 
+const DB_NAME = 'PlanilleroDB';
+const STORE_NAME = 'fotos_cierre';
+
+const openDB = () => new Promise((resolve, reject) => {
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onupgradeneeded = (e) => e.target.result.createObjectStore(STORE_NAME);
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+
+const saveFotoIDB = async (key, file) => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(file, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+};
+
+const getFotosIDB = async () => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.getAll();
+    const reqKeys = store.getAllKeys();
+    tx.oncomplete = () => {
+      const result = {};
+      reqKeys.result.forEach((k, i) => { result[k] = req.result[i]; });
+      resolve(result);
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+};
+
+const clearFotosIDB = async () => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+};
+
 export function CuadraturaCierre() {
   const { fuelRecords } = useFuelData();
   const { saveShiftQuadrature, loading } = useCuadratura();
   
-  const [numInicial, setNumInicial] = useState({});
-  const [numFinal, setNumFinal] = useState({});
-  const [litrosPozo, setLitrosPozo] = useState({});
+  const [numInicial, setNumInicial] = useState(() => JSON.parse(localStorage.getItem('cierre_numInicial')) || {});
+  const [numFinal, setNumFinal] = useState(() => JSON.parse(localStorage.getItem('cierre_numFinal')) || {});
+  const [litrosPozo, setLitrosPozo] = useState(() => JSON.parse(localStorage.getItem('cierre_litrosPozo')) || {});
   const [fotos, setFotos] = useState({});
   
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  React.useEffect(() => {
+    getFotosIDB()
+      .then(storedFotos => setFotos(storedFotos))
+      .catch(err => console.error("Error loading fotos from IDB", err));
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem('cierre_numInicial', JSON.stringify(numInicial));
+  }, [numInicial]);
+
+  React.useEffect(() => {
+    localStorage.setItem('cierre_numFinal', JSON.stringify(numFinal));
+  }, [numFinal]);
+
+  React.useEffect(() => {
+    localStorage.setItem('cierre_litrosPozo', JSON.stringify(litrosPozo));
+  }, [litrosPozo]);
 
   // Calcula litros cargados por surtidor según el Excel
   const litrosPorSurtidor = useMemo(() => {
@@ -70,8 +134,9 @@ export function CuadraturaCierre() {
   };
 
   // Manejar subida de foto
-  const handlePhotoChange = (nombre, file) => {
+  const handlePhotoChange = async (nombre, file) => {
     setFotos(prev => ({ ...prev, [nombre]: file }));
+    await saveFotoIDB(nombre, file);
   };
 
   // Enviar formulario
@@ -111,6 +176,10 @@ export function CuadraturaCierre() {
 
     const res = await saveShiftQuadrature(surtidoresData, tanquesData, fotos);
     if (res.ok) {
+      localStorage.removeItem('cierre_numInicial');
+      localStorage.removeItem('cierre_numFinal');
+      localStorage.removeItem('cierre_litrosPozo');
+      await clearFotosIDB();
       setSuccess(true);
     } else {
       setErrorMsg(res.message);
@@ -181,6 +250,7 @@ export function CuadraturaCierre() {
                           <input 
                             type="number" placeholder="0.0" 
                             className="cuadratura-input"
+                            value={numInicial[surtidor] ?? ''}
                             onChange={e => handleNumChange(surtidor, 'inicial', e.target.value)}
                           />
                         </div>
@@ -189,6 +259,7 @@ export function CuadraturaCierre() {
                           <input 
                             type="number" placeholder="0.0" 
                             className="cuadratura-input"
+                            value={numFinal[surtidor] ?? ''}
                             onChange={e => handleNumChange(surtidor, 'final', e.target.value)}
                           />
                         </div>
@@ -206,7 +277,7 @@ export function CuadraturaCierre() {
                         <Camera size={20} />
                         {hasPhoto ? 'Foto Surtidor Lista' : 'Tomar Foto Surtidor'}
                         <input 
-                          type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                          type="file" accept="image/*" style={{ display: 'none' }}
                           onChange={e => {
                             if (e.target.files && e.target.files[0]) {
                               handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
@@ -234,6 +305,7 @@ export function CuadraturaCierre() {
                           <input 
                             type="number" placeholder="Litros Medidos" 
                             className="cuadratura-input"
+                            value={litrosPozo[tanque] ?? ''}
                             onChange={e => handleLitrosPozoChange(tanque, e.target.value)}
                           />
                         </div>
@@ -242,7 +314,7 @@ export function CuadraturaCierre() {
                           <Camera size={18} />
                           {hasPhoto ? 'Lista' : 'Tomar Foto'}
                           <input 
-                            type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                            type="file" accept="image/*" style={{ display: 'none' }}
                             onChange={e => {
                               if (e.target.files && e.target.files[0]) {
                                 handlePhotoChange(tanque, e.target.files[0]);
