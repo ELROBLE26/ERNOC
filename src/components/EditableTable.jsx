@@ -390,26 +390,44 @@ function ServiceInput({ row, onSaveCell, wizardServices }) {
         onBlur={(e) => {
           let finalVal = e.target.value;
           const typedVal = finalVal.trim().toLowerCase();
-          if (typedVal === 'oper') finalVal = 'OPERATIVO LIBRE';
-          else if (typedVal) {
+          let isOperAutocomplete = false;
+          
+          if (typedVal === 'oper') {
+            finalVal = 'OPERATIVO LIBRE';
+            isOperAutocomplete = true;
+          } else if (typedVal) {
             const match = wizardServices.find(s => s.toLowerCase().startsWith(typedVal));
             if (match) finalVal = match;
           }
           setVal(finalVal);
-          if (finalVal !== (row.servicio || '')) onSaveCell(row.id, { servicio: finalVal });
+          
+          if (finalVal !== (row.servicio || '') || isOperAutocomplete) {
+             const patch = { servicio: finalVal };
+             if (isOperAutocomplete) patch.estado = 'OPERATIVO';
+             onSaveCell(row.id, patch);
+          }
         }}
         onKeyDown={(e) => {
           if (e.key === 'Tab') {
             e.preventDefault();
             let finalVal = val;
             const typedVal = finalVal.trim().toLowerCase();
-            if (typedVal === 'oper') finalVal = 'OPERATIVO LIBRE';
-            else if (typedVal) {
+            let isOperAutocomplete = false;
+            
+            if (typedVal === 'oper') {
+              finalVal = 'OPERATIVO LIBRE';
+              isOperAutocomplete = true;
+            } else if (typedVal) {
               const match = wizardServices.find(s => s.toLowerCase().startsWith(typedVal));
               if (match) finalVal = match;
             }
             setVal(finalVal);
-            if (finalVal !== (row.servicio || '')) onSaveCell(row.id, { servicio: finalVal });
+            
+            if (finalVal !== (row.servicio || '') || isOperAutocomplete) {
+               const patch = { servicio: finalVal };
+               if (isOperAutocomplete) patch.estado = 'OPERATIVO';
+               onSaveCell(row.id, patch);
+            }
             
             const ubiInput = document.getElementById(`ubicacion-${row.id}`);
             if (ubiInput) ubiInput.focus();

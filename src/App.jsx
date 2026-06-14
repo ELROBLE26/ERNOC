@@ -401,7 +401,7 @@ function App() {
         try {
           for (const row of filteredRows) {
             await saveCell(row.id, {
-              estado: 'OPERATIVO',
+              estado: 'PENDIENTE',
               oper: '',
               vidrio: '',
               mant: '',
