@@ -21,23 +21,19 @@ export function ControlPannesPanel({ rows }) {
     ARTICULADO: CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat.key]: 0 }), {}),
   });
   
-  const [po, setPo] = useState(() => JSON.parse(localStorage.getItem('ernoc_po')) || { RIGIDO: 0, ARTICULADO: 0 });
+  const [po, setPo] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ernoc_po');
+      return stored ? JSON.parse(stored) : { RIGIDO: 0, ARTICULADO: 0 };
+    } catch {
+      return { RIGIDO: 0, ARTICULADO: 0 };
+    }
+  });
 
   const [otData, setOtData] = useState([]);
   const [rtgData, setRtgData] = useState([]);
   const [pastedImage, setPastedImage] = useState(null);
   const [manualPannes, setManualPannes] = useState({});
-
-  useEffect(() => {
-    const validBusIds = new Set(rows.map(r => r.cod || r.ppu));
-    setManualPannes(prev => {
-      const next = { ...prev };
-      Object.keys(next).forEach(id => {
-        if (!validBusIds.has(id)) delete next[id];
-      });
-      return next;
-    });
-  }, [rows]);
 
   const fueraServicioOT = useMemo(() => {
     const counts = { RIGIDO: 0, ARTICULADO: 0 };
@@ -270,7 +266,7 @@ export function ControlPannesPanel({ rows }) {
     setManualPannes(prev => {
       const next = { ...prev };
       let changed = false;
-      const currentInternos = new Set(rtgVencidas.map(b => b.interno.toString()));
+      const currentInternos = new Set(rtgVencidas.map(b => String(b.interno || b.patente || '')));
       Object.keys(next).forEach(k => {
         if (!currentInternos.has(k)) {
           delete next[k];
