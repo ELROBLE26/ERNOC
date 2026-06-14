@@ -328,15 +328,40 @@ function App() {
     setNfcSaving(true);
     setNfcError('');
     
-    // Usamos la misma función maestra handleCreate que inserta el bus en Supabase y luego crea la asociación NFC
-    const result = await handleCreate(busFormData);
-    
-    if (result.ok) {
-       setNfcRegisterOpen(false);
-       setNfcMessage(`Bus ${busFormData.cod} creado y asociado correctamente a la tarjeta ${busFormData.nfc_uid}.`);
-       await loadFleet(); // Refrescamos la lista
+    if (busFormData.id) {
+      // It's an existing bus! 
+      // Update its COD with the NFC UID (if changed), and save other details.
+      const { nfc_uid: nfcUid, id, ...patch } = busFormData;
+      const saveResult = await saveCell(id, patch);
+      if (saveResult.ok && nfcUid) {
+        try {
+          await createNfcAssociation({
+            nfc_uid: nfcUid,
+            cod: patch.cod,
+            ppu: patch.ppu,
+            terminal_default: patch.terminal,
+            observacion: 'Asociado desde modal de registro a bus existente',
+          });
+          setNfcRegisterOpen(false);
+          setNfcMessage(`Tarjeta NFC ${nfcUid} asociada al bus existente ${patch.cod}.`);
+          await loadFleet();
+        } catch (associateError) {
+          setNfcError(associateError.message || 'Se actualizó el bus pero no se pudo asociar la tarjeta NFC.');
+        }
+      } else {
+        setNfcError(saveResult.message || 'No se pudo actualizar el bus existente.');
+      }
     } else {
-       setNfcError(result.message || 'No se pudo registrar el bus.');
+      // Create new bus
+      const result = await handleCreate(busFormData);
+      
+      if (result.ok) {
+         setNfcRegisterOpen(false);
+         setNfcMessage(`Bus ${busFormData.cod} creado y asociado correctamente a la tarjeta ${busFormData.nfc_uid}.`);
+         await loadFleet(); // Refrescamos la lista
+      } else {
+         setNfcError(result.message || 'No se pudo registrar el bus.');
+      }
     }
     
     setNfcSaving(false);
@@ -698,6 +723,7 @@ function App() {
             terminalFilter={filters.terminal}
             saving={nfcSaving || formBusy}
             error={nfcError}
+            rows={rows}
             onCreate={handleNfcCreateBus}
             onCancel={() => {
               setNfcRegisterOpen(false);

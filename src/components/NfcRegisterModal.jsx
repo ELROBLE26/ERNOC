@@ -8,10 +8,12 @@ export function NfcRegisterModal({
   terminalFilter,
   saving,
   error,
+  rows = [], // Add rows to props
   onCreate,
   onCancel,
 }) {
   const [form, setForm] = useState({
+    id: null,
     cod: nfcUid || '',
     ppu: '',
     numero: '',
@@ -23,6 +25,7 @@ export function NfcRegisterModal({
   useEffect(() => {
     if (open) {
       setForm({
+        id: null,
         cod: nfcUid || '',
         ppu: '',
         numero: '',
@@ -51,7 +54,47 @@ export function NfcRegisterModal({
   if (!open) return null;
 
   const handleChange = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    let nextForm = { ...form, [field]: value };
+    
+    // Auto-fill logic
+    if (field === 'ppu' && value) {
+      const cleanValue = value.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (cleanValue.length >= 4) {
+        const match = rows.find(r => r.ppu && r.ppu.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanValue);
+        if (match) {
+          nextForm = {
+            ...nextForm,
+            id: match.id,
+            cod: match.cod || nextForm.cod,
+            numero: match.numero || nextForm.numero,
+            modelo: match.modelo || nextForm.modelo,
+            asignacion: match.asignacion || nextForm.asignacion,
+            tipo: match.tipo || nextForm.tipo,
+            terminal: match.terminal || nextForm.terminal,
+            zona: match.zona || nextForm.zona,
+            ubicacion: match.ubicacion || nextForm.ubicacion,
+          };
+        }
+      }
+    } else if (field === 'numero' && value) {
+      const match = rows.find(r => String(r.numero) === String(value));
+      if (match) {
+        nextForm = {
+          ...nextForm,
+          id: match.id,
+          cod: match.cod || nextForm.cod,
+          ppu: match.ppu || nextForm.ppu,
+          modelo: match.modelo || nextForm.modelo,
+          asignacion: match.asignacion || nextForm.asignacion,
+          tipo: match.tipo || nextForm.tipo,
+          terminal: match.terminal || nextForm.terminal,
+          zona: match.zona || nextForm.zona,
+          ubicacion: match.ubicacion || nextForm.ubicacion,
+        };
+      }
+    }
+
+    setForm(nextForm);
   };
 
   const handleSubmit = (e) => {
@@ -155,6 +198,12 @@ export function NfcRegisterModal({
               onChange={(value) => handleChange('ubicacion', value)}
             />
             
+            {form.id && (
+              <p style={{ gridColumn: '1 / -1', color: 'var(--success-600)', fontSize: '0.85rem', marginTop: '8px', marginBottom: 0 }}>
+                ✓ Bus existente encontrado. Se actualizará la información y se asociará la tarjeta NFC.
+              </p>
+            )}
+
             {error ? <p className="modal-error" style={{ gridColumn: '1 / -1' }}>⚠ {error}</p> : null}
 
             <div className="modal-actions" style={{ gridColumn: '1 / -1', marginTop: 16 }}>
