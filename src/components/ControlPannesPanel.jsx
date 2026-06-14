@@ -171,15 +171,20 @@ export function ControlPannesPanel({ rows }) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  const findKey = (row, partialMatches) => {
-     const key = Object.keys(row).find(k => {
-       const cleanK = removeAccents(k.toLowerCase()).replace(/[^a-z0-9]/g, '');
-       return partialMatches.some(p => {
-         const cleanP = removeAccents(p.toLowerCase()).replace(/[^a-z0-9]/g, '');
-         return cleanK.includes(cleanP);
-       });
-     });
-     return key ? row[key] : null;
+  const findColumnKey = (rowKeys, candidates) => {
+    for (const candidate of candidates) {
+      const exactMatch = rowKeys.find(
+        (k) => removeAccents(k.toLowerCase().trim()) === removeAccents(candidate.toLowerCase().trim())
+      );
+      if (exactMatch) return exactMatch;
+    }
+    for (const candidate of candidates) {
+      const partialMatch = rowKeys.find((k) =>
+        removeAccents(k.toLowerCase()).includes(removeAccents(candidate.toLowerCase()))
+      );
+      if (partialMatch) return partialMatch;
+    }
+    return null;
   };
 
   const handlePaste = (e) => {
@@ -228,8 +233,12 @@ export function ControlPannesPanel({ rows }) {
       });
 
       if (matchedBus) {
-        const rawEmision = findKey(row, ['emision']);
-        const rawVencimiento = findKey(row, ['vencimiento']);
+        const keys = Object.keys(row);
+        const keyEmision = findColumnKey(keys, ['Emision RTG', 'Fecha Emision RTG', 'Emision']);
+        const keyVencimiento = findColumnKey(keys, ['Vencimiento RTG', 'Fecha Vencimiento RTG', 'Vencimiento']);
+        
+        const rawEmision = keyEmision ? row[keyEmision] : null;
+        const rawVencimiento = keyVencimiento ? row[keyVencimiento] : null;
         
         const fechaEmision = formatDateToDDMMYYYY(rawEmision);
         const fechaVencimiento = formatDateToDDMMYYYY(rawVencimiento);
