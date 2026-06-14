@@ -314,9 +314,9 @@ export function EditableTable({
                               title="Marcar como Operativo"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm('¿Desea cambiar a operativo?')) {
+                                if (window.confirm('¿Desea reparar la falla y dejar el bus PENDIENTE?')) {
                                   onSaveCell(row.id, {
-                                    estado: 'OPERATIVO',
+                                    estado: 'PENDIENTE',
                                     oper: '',
                                     vidrio: '',
                                     mant: '',
