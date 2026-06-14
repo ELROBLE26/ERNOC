@@ -273,14 +273,16 @@ export function CuadraturaCierre() {
                       </div>
 
                       {/* Botón Foto Surtidor */}
-                      <label className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`}>
+                      <label htmlFor={`file-surtidor-${surtidor}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`}>
                         <Camera size={20} />
                         {hasPhoto ? 'Foto Surtidor Lista' : 'Tomar Foto Surtidor'}
                         <input 
+                          id={`file-surtidor-${surtidor}`}
                           type="file" accept="image/*" style={{ display: 'none' }}
                           onChange={e => {
                             if (e.target.files && e.target.files[0]) {
                               handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
+                              e.target.value = '';
                             }
                           }}
                         />
@@ -310,14 +312,16 @@ export function CuadraturaCierre() {
                           />
                         </div>
                         
-                        <label className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '12px' }}>
+                        <label htmlFor={`file-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '12px' }}>
                           <Camera size={18} />
                           {hasPhoto ? 'Lista' : 'Tomar Foto'}
                           <input 
+                            id={`file-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`}
                             type="file" accept="image/*" style={{ display: 'none' }}
                             onChange={e => {
                               if (e.target.files && e.target.files[0]) {
                                 handlePhotoChange(tanque, e.target.files[0]);
+                                e.target.value = '';
                               }
                             }}
                           />
