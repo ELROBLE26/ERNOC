@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight, BarChart2 } from 'lucide-react';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -10,6 +10,7 @@ import { OperationsSummary } from './components/OperationsSummary';
 import { MaintenancePanel } from './components/MaintenancePanel';
 import { FuelPanel } from './components/FuelPanel';
 import { CuadraturaPanel } from './components/CuadraturaPanel';
+import { ControlPannesPanel } from './components/ControlPannesPanel';
 import { PlanilleroApp } from './components/planillero/PlanilleroApp';
 import { useFleetData } from './hooks/useFleetData';
 import { useNfcReader } from './hooks/useNfcReader';
@@ -511,6 +512,19 @@ function App() {
             </button>
             <button
               type="button"
+              id="nav-control-pannes"
+              className={`sidebar-link ${activeView === 'control-pannes' ? 'sidebar-link-active' : ''}`}
+              onClick={() => {
+                setActiveView('control-pannes');
+                setSidebarOpen(false);
+              }}
+              title="Proyección"
+            >
+              <span className="sidebar-link-icon"><BarChart2 size={14} /></span>
+              {!sidebarCollapsed && <span className="sidebar-link-text">Proyección</span>}
+            </button>
+            <button
+              type="button"
               id="nav-configuracion"
               className={`sidebar-link ${activeView === 'configuracion' ? 'sidebar-link-active' : ''}`}
               onClick={() => {
@@ -697,6 +711,8 @@ function App() {
             <FuelPanel rows={rows} fuelData={fuelData} onSaveCell={saveCell} />
           ) : activeView === 'cuadratura' ? (
             <CuadraturaPanel />
+          ) : activeView === 'control-pannes' ? (
+            <ControlPannesPanel rows={filteredRows} />
           ) : null}
 
           <NfcOperModal
