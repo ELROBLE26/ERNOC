@@ -104,7 +104,7 @@ export function ControlPannesPanel({ rows }) {
             }
           }
 
-          const sheetData = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, raw: false, defval: "" });
+          const sheetData = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, raw: true, defval: "" });
           resolve(sheetData);
         } catch (err) {
           reject(err);
