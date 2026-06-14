@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Camera, Save, CheckCircle } from 'lucide-react';
+import { Camera, Save, CheckCircle, Image as LucideImage } from 'lucide-react';
 import { useCuadratura } from '../../hooks/useCuadratura';
 import { useFuelData } from '../../hooks/useFuelData';
 
@@ -273,20 +273,36 @@ export function CuadraturaCierre() {
                       </div>
 
                       {/* Botón Foto Surtidor */}
-                      <label htmlFor={`file-surtidor-${surtidor}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`}>
-                        <Camera size={20} />
-                        {hasPhoto ? 'Foto Surtidor Lista' : 'Tomar Foto Surtidor'}
-                        <input 
-                          id={`file-surtidor-${surtidor}`}
-                          type="file" accept="image/*" style={{ display: 'none' }}
-                          onChange={e => {
-                            if (e.target.files && e.target.files[0]) {
-                              handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                      </label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <label htmlFor={`cam-surtidor-${surtidor}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '10px 8px', fontSize: '0.85rem' }}>
+                          <Camera size={18} />
+                          {hasPhoto ? 'Cámara ✓' : 'Cámara'}
+                          <input 
+                            id={`cam-surtidor-${surtidor}`}
+                            type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                            onChange={e => {
+                              if (e.target.files && e.target.files[0]) {
+                                handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
+                                e.target.value = '';
+                              }
+                            }}
+                          />
+                        </label>
+                        <label htmlFor={`gal-surtidor-${surtidor}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '10px 8px', fontSize: '0.85rem' }}>
+                          <LucideImage size={18} />
+                          {hasPhoto ? 'Galería ✓' : 'Galería'}
+                          <input 
+                            id={`gal-surtidor-${surtidor}`}
+                            type="file" accept="image/*" style={{ display: 'none' }}
+                            onChange={e => {
+                              if (e.target.files && e.target.files[0]) {
+                                handlePhotoChange(`Surtidor ${surtidor}`, e.target.files[0]);
+                                e.target.value = '';
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
 
                     </div>
                   );
@@ -312,20 +328,36 @@ export function CuadraturaCierre() {
                           />
                         </div>
                         
-                        <label htmlFor={`file-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '12px' }}>
-                          <Camera size={18} />
-                          {hasPhoto ? 'Lista' : 'Tomar Foto'}
-                          <input 
-                            id={`file-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`}
-                            type="file" accept="image/*" style={{ display: 'none' }}
-                            onChange={e => {
-                              if (e.target.files && e.target.files[0]) {
-                                handlePhotoChange(tanque, e.target.files[0]);
-                                e.target.value = '';
-                              }
-                            }}
-                          />
-                        </label>
+                        <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
+                          <label htmlFor={`cam-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '10px 8px', fontSize: '0.85rem' }}>
+                            <Camera size={18} />
+                            {hasPhoto ? 'Cámara ✓' : 'Cámara'}
+                            <input 
+                              id={`cam-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`}
+                              type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+                              onChange={e => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handlePhotoChange(tanque, e.target.files[0]);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                          </label>
+                          <label htmlFor={`gal-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`} className={`cuadratura-btn-camara ${hasPhoto ? 'done' : 'pending'}`} style={{ flex: 1, padding: '10px 8px', fontSize: '0.85rem' }}>
+                            <LucideImage size={18} />
+                            {hasPhoto ? 'Galería ✓' : 'Galería'}
+                            <input 
+                              id={`gal-tanque-${tanque.replace(/[^a-zA-Z0-9]/g, '')}`}
+                              type="file" accept="image/*" style={{ display: 'none' }}
+                              onChange={e => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handlePhotoChange(tanque, e.target.files[0]);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
                     </div>
                   );
