@@ -400,7 +400,7 @@ function App() {
         setFormBusy(true);
         try {
           // Afectamos a TODOS los buses del terminal activo, no solo los filtrados.
-          const rowsToClear = rows.filter((r) => workTerminal === 'Todos' || r.terminal === workTerminal);
+          const rowsToClear = rows.filter((r) => workTerminal === 'Todos' || normalizeText(r.terminal) === normalizeText(workTerminal));
           for (const row of rowsToClear) {
             await saveCell(row.id, {
               estado: 'PENDIENTE',
