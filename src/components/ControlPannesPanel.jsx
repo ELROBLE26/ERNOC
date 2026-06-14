@@ -28,6 +28,7 @@ export function ControlPannesPanel({ rows }) {
 
   const [otData, setOtData] = useState([]);
   const [rtgData, setRtgData] = useState([]);
+  const [pastedImage, setPastedImage] = useState(null);
 
   // Auto calculate FUERA DE SERVICIO (OT)
   const fueraServicioOT = useMemo(() => {
@@ -163,8 +164,27 @@ export function ControlPannesPanel({ rows }) {
   };
 
   const findKey = (row, partialMatches) => {
-     const key = Object.keys(row).find(k => partialMatches.some(p => k.toLowerCase().includes(p.toLowerCase())));
+     const key = Object.keys(row).find(k => {
+       const cleanK = k.toLowerCase().replace(/\s+/g, '');
+       return partialMatches.some(p => cleanK.includes(p.toLowerCase().replace(/\s+/g, '')));
+     });
      return key ? row[key] : null;
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setPastedImage(ev.target.result);
+        };
+        reader.readAsDataURL(blob);
+        break;
+      }
+    }
   };
 
   // Prepare RTG vencidas list
@@ -192,6 +212,23 @@ export function ControlPannesPanel({ rows }) {
           const rawEmision = findKey(row, ['emisión rtg', 'emision rtg', 'fecha emisión', 'fecha emision']);
           const rawVencimiento = findKey(row, ['vencimiento rtg', 'fecha vencimiento']);
 
+          let tipoPanneStr = 'RTG';
+          if (otData && otData.length > 0) {
+            const otBusMatch = otData.find(otRow => {
+              const rPpu = (otRow['PPU'] || otRow['Patente'] || otRow['Patente Bus'] || otRow['ppu'] || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+              const rCod = (otRow['Código'] || otRow['N° Interno Bus'] || otRow['Nro interno'] || otRow['N° interno'] || '').toString().trim();
+              const bPpu = (matchedBus.ppu || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              const bCod = (matchedBus.cod || '').toString().trim();
+              return (bPpu && bPpu === rPpu) || (bCod && bCod === rCod);
+            });
+            if (otBusMatch) {
+              const panneVal = findKey(otBusMatch, ['tipo panne', 'tipo de panne', 'panne', 'falla', 'motivo', 'estado', 'observacion', 'detalle']);
+              if (panneVal) {
+                tipoPanneStr = panneVal;
+              }
+            }
+          }
+
           results.push({
             interno: matchedBus.cod,
             patente: matchedBus.ppu,
@@ -200,13 +237,13 @@ export function ControlPannesPanel({ rows }) {
             fechaEmision: formatDateToDDMMYYYY(rawEmision),
             fechaVencimiento: formatDateToDDMMYYYY(rawVencimiento),
             dias: days,
-            tipoPanne: 'RTG', // Default fixed as 'RTG' or empty
+            tipoPanne: tipoPanneStr,
           });
         }
       }
     });
     return results;
-  }, [rtgData, rows]);
+  }, [rtgData, rows, otData]);
 
   const TableBlock = ({ title, tipo, flotaTotal, fueraServicioOT, totalDisponibles, diferencia }) => (
     <div style={{ marginBottom: '10px', border: '1px solid #000', fontFamily: 'sans-serif', fontSize: '11px' }}>
@@ -327,19 +364,22 @@ export function ControlPannesPanel({ rows }) {
           />
         </div>
 
-        {/* Tabla RTG Vencidas */}
-        <div style={{ flex: 1, minWidth: '400px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-           <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <h3 style={{ margin: 0, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-               <Info size={14} style={{ color: 'var(--primary-600)' }}/>
-               Buses con RTG Vencida
-             </h3>
-             <span className="badge" style={{ backgroundColor: 'var(--danger-100)', color: 'var(--danger-700)', padding: '2px 6px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}>
-               {rtgVencidas.length} registros
-             </span>
-           </div>
-           
-           <div style={{ overflowX: 'auto', maxHeight: '500px', overflowY: 'auto' }}>
+        {/* Right Column: RTG Table + Paste Box */}
+        <div style={{ flex: 1, minWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* Tabla RTG Vencidas */}
+          <div style={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+             <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <h3 style={{ margin: 0, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                 <Info size={14} style={{ color: 'var(--primary-600)' }}/>
+                 Buses con RTG Vencida
+               </h3>
+               <span className="badge" style={{ backgroundColor: 'var(--danger-100)', color: 'var(--danger-700)', padding: '2px 6px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}>
+                 {rtgVencidas.length} registros
+               </span>
+             </div>
+             
+             <div style={{ overflowX: 'auto', maxHeight: '400px', overflowY: 'auto' }}>
              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', fontFamily: 'sans-serif' }}>
                <thead style={{ backgroundColor: '#3182ce', color: '#fff', position: 'sticky', top: 0 }}>
                  <tr>
@@ -377,6 +417,59 @@ export function ControlPannesPanel({ rows }) {
                </tbody>
              </table>
            </div>
+          </div>
+
+          {/* Image Paste Box */}
+          <div 
+             onPaste={handlePaste} 
+             tabIndex={0}
+             style={{ 
+               flex: 1, 
+               minHeight: '200px',
+               border: '2px dashed #cbd5e0', 
+               borderRadius: '8px', 
+               display: 'flex', 
+               justifyContent: 'center', 
+               alignItems: 'center',
+               backgroundColor: pastedImage ? '#000' : '#f7fafc',
+               cursor: 'pointer',
+               overflow: 'hidden',
+               position: 'relative',
+               outline: 'none'
+             }}
+             title="Haz clic aquí y presiona Cmd+V o Ctrl+V para pegar una imagen"
+           >
+             {pastedImage ? (
+               <img src={pastedImage} alt="Pegado" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+             ) : (
+               <div style={{ color: '#a0aec0', fontWeight: 'bold', fontSize: '24px', textAlign: 'center', opacity: 0.3, userSelect: 'none', padding: '20px' }}>
+                 NO SE REGISTRAN OS EN TURNO
+               </div>
+             )}
+             {pastedImage && (
+               <button 
+                 onClick={(e) => { e.stopPropagation(); setPastedImage(null); }} 
+                 style={{ 
+                   position: 'absolute', 
+                   top: '10px', 
+                   right: '10px', 
+                   background: 'rgba(255,0,0,0.7)', 
+                   color: '#fff', 
+                   border: 'none', 
+                   borderRadius: '50%', 
+                   width: '30px', 
+                   height: '30px', 
+                   cursor: 'pointer',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                   fontWeight: 'bold'
+                 }}
+               >
+                 ✕
+               </button>
+             )}
+          </div>
         </div>
       </div>
     </div>
