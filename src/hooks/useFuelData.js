@@ -95,14 +95,14 @@ export function useFuelData() {
       const payload = {
         ppu: record.ppu,
         interno: record.interno || '',
-        litros: record.litros,
+        litros: parseFloat(record.litros) || 0,
         surtidor: record.surtidor,
         fecha: record.fecha || new Date().toISOString().split('T')[0],
         hora: record.hora,
         raw_data: { 
           ppu: record.ppu, 
           cod: record.interno, 
-          litros: record.litros, 
+          litros: parseFloat(record.litros) || 0, 
           surtidor: record.surtidor, 
           hora: record.hora, 
           fecha: record.fecha || new Date().toISOString().split('T')[0],

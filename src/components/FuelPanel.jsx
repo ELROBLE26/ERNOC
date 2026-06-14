@@ -87,19 +87,20 @@ export function FuelPanel({ rows, fuelData, onSaveCell }) {
     const terminalSet = new Set();
 
     fuelRecords.forEach((r) => {
+      const litrosNum = parseFloat(r.litros) || 0;
       const s = surtMap.get(r.surtidor) || { litros: 0, count: 0, buses: new Set() };
-      s.litros += r.litros;
+      s.litros += litrosNum;
       s.count += 1;
       if (r.cod) s.buses.add(r.cod);
       if (r.ppu) s.buses.add(r.ppu);
       surtMap.set(r.surtidor, s);
 
-      totalLitros += r.litros;
+      totalLitros += litrosNum;
       totalRegistros += 1;
 
       if (r.turno) {
         const t = turnoMap.get(r.turno) || { litros: 0, count: 0 };
-        t.litros += r.litros;
+        t.litros += litrosNum;
         t.count += 1;
         turnoMap.set(r.turno, t);
       }
@@ -199,7 +200,7 @@ export function FuelPanel({ rows, fuelData, onSaveCell }) {
       }
 
       if (cargas.length > 0) {
-        const totalLitros = cargas.reduce((sum, c) => sum + c.litros, 0);
+        const totalLitros = cargas.reduce((sum, c) => sum + (parseFloat(c.litros) || 0), 0);
         const surtidoresUsados = [...new Set(cargas.map((c) => c.surtidor))];
         cargadosList.push({
           ...bus,
