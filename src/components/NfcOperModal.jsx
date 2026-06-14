@@ -295,8 +295,6 @@ export function NfcOperModal({
             ) : null}
           </div>
 
-          </div>
-
           <div style={{ marginTop: '16px', border: '1px solid var(--gray-200)', borderRadius: '8px', overflow: 'hidden' }}>
             <button 
               type="button" 
