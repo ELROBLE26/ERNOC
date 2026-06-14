@@ -133,6 +133,40 @@ export function ControlPannesPanel({ rows }) {
     }
   };
 
+  const formatDateToDDMMYYYY = (val) => {
+    if (!val) return '';
+    if (val instanceof Date) {
+      const d = val.getDate().toString().padStart(2, '0');
+      const m = (val.getMonth() + 1).toString().padStart(2, '0');
+      const y = val.getFullYear();
+      return `${d}/${m}/${y}`;
+    }
+    if (typeof val === 'number') {
+      const utcDate = new Date((val - 25569) * 86400 * 1000);
+      const d = utcDate.getUTCDate().toString().padStart(2, '0');
+      const m = (utcDate.getUTCMonth() + 1).toString().padStart(2, '0');
+      const y = utcDate.getUTCFullYear();
+      return `${d}/${m}/${y}`;
+    }
+    const str = String(val).trim().split(' ')[0];
+    const parts = str.split(/[-/]/);
+    if (parts.length >= 3) {
+      if (parts[0].length === 4) {
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      } else {
+        let y = parts[2];
+        if (y.length === 2) y = '20' + y;
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${y}`;
+      }
+    }
+    return str;
+  };
+
+  const findKey = (row, partialMatches) => {
+     const key = Object.keys(row).find(k => partialMatches.some(p => k.toLowerCase().includes(p.toLowerCase())));
+     return key ? row[key] : null;
+  };
+
   // Prepare RTG vencidas list
   const rtgVencidas = useMemo(() => {
     if (!rtgData.length || !rows.length) return [];
@@ -155,13 +189,16 @@ export function ControlPannesPanel({ rows }) {
         });
 
         if (matchedBus) {
+          const rawEmision = findKey(row, ['emisión rtg', 'emision rtg', 'fecha emisión', 'fecha emision']);
+          const rawVencimiento = findKey(row, ['vencimiento rtg', 'fecha vencimiento']);
+
           results.push({
             interno: matchedBus.cod,
             patente: matchedBus.ppu,
-            taller: row['Taller'] || row['Terminal'] || matchedBus.terminal,
+            taller: matchedBus.terminal || 'No asignado',
             tipo: matchedBus.tipo,
-            fechaEmision: row['Fecha Emisión RTG'] instanceof Date ? row['Fecha Emisión RTG'].toLocaleDateString() : row['Fecha Emisión RTG'] || '',
-            fechaVencimiento: row['Fecha Vencimiento RTG'] instanceof Date ? row['Fecha Vencimiento RTG'].toLocaleDateString() : row['Fecha Vencimiento RTG'] || '',
+            fechaEmision: formatDateToDDMMYYYY(rawEmision),
+            fechaVencimiento: formatDateToDDMMYYYY(rawVencimiento),
             dias: days,
             tipoPanne: 'RTG', // Default fixed as 'RTG' or empty
           });
@@ -198,13 +235,13 @@ export function ControlPannesPanel({ rows }) {
       {/* Manual Rows */}
       {CATEGORIES.map(cat => (
         <div key={cat.key} style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: cat.color }}>
-          <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>{cat.label}</div>
-          <div style={{ width: '100px', padding: '0' }}>
+          <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', display: 'flex', alignItems: 'center' }}>{cat.label}</div>
+          <div style={{ width: '100px', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <input 
               type="number" 
-              value={manualCounts[tipo][cat.key] || ''} 
+              value={manualCounts[tipo][cat.key] !== undefined ? manualCounts[tipo][cat.key] : 0} 
               onChange={(e) => handleManualCountChange(tipo, cat.key, e.target.value)}
-              style={{ width: '100%', height: '100%', border: 'none', textAlign: 'center', backgroundColor: 'transparent', outline: 'none' }}
+              style={{ width: '100%', border: 'none', textAlign: 'center', backgroundColor: 'transparent', outline: 'none' }}
               min="0"
             />
           </div>
@@ -219,13 +256,13 @@ export function ControlPannesPanel({ rows }) {
 
       {/* PO */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#fff' }}>
-        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', fontWeight: 'bold' }}>PO</div>
-        <div style={{ width: '100px', padding: '0' }}>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>PO</div>
+        <div style={{ width: '100px', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
            <input 
               type="number" 
-              value={po[tipo] || ''} 
+              value={po[tipo] !== undefined ? po[tipo] : 0} 
               onChange={(e) => setPo(prev => ({ ...prev, [tipo]: parseInt(e.target.value, 10) || 0 }))}
-              style={{ width: '100%', height: '100%', border: 'none', textAlign: 'center', fontWeight: 'bold', outline: 'none' }}
+              style={{ width: '100%', border: 'none', textAlign: 'center', fontWeight: 'bold', outline: 'none' }}
             />
         </div>
       </div>
