@@ -395,11 +395,13 @@ function App() {
   const handleClearReport = async () => {
     const pwd = window.prompt('Ingrese la contraseña de seguridad para limpiar el reporte de operatividad:');
     if (pwd === 'CLEAROPER2026') {
-      const confirmReset = window.confirm('¿Está seguro de que desea limpiar el reporte de operatividad? Esto afectará a todos los buses filtrados actualmente.');
+      const confirmReset = window.confirm('¿Está seguro de que desea limpiar el reporte de operatividad? Esto afectará a todos los buses del terminal activo.');
       if (confirmReset) {
         setFormBusy(true);
         try {
-          for (const row of filteredRows) {
+          // Afectamos a TODOS los buses del terminal activo, no solo los filtrados.
+          const rowsToClear = rows.filter((r) => workTerminal === 'Todos' || r.terminal === workTerminal);
+          for (const row of rowsToClear) {
             await saveCell(row.id, {
               estado: 'PENDIENTE',
               oper: '',

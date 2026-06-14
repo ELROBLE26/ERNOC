@@ -170,7 +170,7 @@ export function buildExclusiveProblemPatch(problemField) {
 
   return {
     ...patch,
-    estado: problemField ? 'NO OPERATIVO' : 'OPERATIVO',
+    estado: problemField ? 'NO OPERATIVO' : 'PENDIENTE',
   };
 }
 
