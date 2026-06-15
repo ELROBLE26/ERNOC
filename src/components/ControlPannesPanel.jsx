@@ -24,9 +24,13 @@ export function ControlPannesPanel({ rows }) {
   const [po, setPo] = useState(() => {
     try {
       const stored = localStorage.getItem('ernoc_po');
-      return stored ? JSON.parse(stored) : { RIGIDO: 0, ARTICULADO: 0 };
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.RIGIDO !== 0 || parsed.ARTICULADO !== 0) return parsed;
+      }
+      return { RIGIDO: 182, ARTICULADO: 60 };
     } catch {
-      return { RIGIDO: 0, ARTICULADO: 0 };
+      return { RIGIDO: 182, ARTICULADO: 60 };
     }
   });
 
@@ -83,17 +87,6 @@ export function ControlPannesPanel({ rows }) {
     return counts;
   }, [otData, rows]);
 
-  // Calculations for Rigido
-  const rigidoFlotaTotal = rows.filter(r => r.tipo === 'RIGIDO').length;
-  const rigidoSumManual = CATEGORIES.reduce((sum, cat) => sum + (Number(manualCounts.RIGIDO[cat.key]) || 0), 0);
-  const rigidoTotalDisponibles = rigidoFlotaTotal - fueraServicioOT.RIGIDO - rigidoSumManual;
-  const rigidoDiferencia = rigidoTotalDisponibles - po.RIGIDO;
-
-  // Calculations for Articulado
-  const artFlotaTotal = rows.filter(r => r.tipo === 'ARTICULADO').length;
-  const artSumManual = CATEGORIES.reduce((sum, cat) => sum + (Number(manualCounts.ARTICULADO[cat.key]) || 0), 0);
-  const artTotalDisponibles = artFlotaTotal - fueraServicioOT.ARTICULADO - artSumManual;
-  const artDiferencia = artTotalDisponibles - po.ARTICULADO;
 
   const handleManualCountChange = (tipo, key, value) => {
     setManualCounts(prev => ({
@@ -374,15 +367,50 @@ export function ControlPannesPanel({ rows }) {
         hora = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
       }
 
+      const matchedBus = rows.find(b => 
+        (interno && String(b.cod).trim() === String(interno).trim()) ||
+        (ppu && (b.ppu || '').toLowerCase().replace(/[^a-z0-9]/g, '') === String(ppu).toLowerCase().replace(/[^a-z0-9]/g, ''))
+      );
+      const tipo = matchedBus ? matchedBus.tipo : 'N/A';
+
       return {
         interno,
         ppu,
+        tipo,
         fecha: fecha || fechaRaw,
         hora,
         observacion
       };
     }).filter(x => x.interno || x.ppu);
-  }, [otrosFsData]);
+  }, [otrosFsData, rows]);
+
+  const rtgAutoCount = useMemo(() => {
+    let rigido = 0;
+    let articulado = 0;
+    rtgVencidas.forEach(b => {
+      if (b.tipo === 'RIGIDO') rigido++;
+      if (b.tipo === 'ARTICULADO') articulado++;
+    });
+    return { RIGIDO: rigido, ARTICULADO: articulado };
+  }, [rtgVencidas]);
+
+  // Calculations for Rigido
+  const rigidoFlotaTotal = rows.filter(r => r.tipo === 'RIGIDO').length;
+  const rigidoSumManual = CATEGORIES.reduce((sum, cat) => {
+    if (cat.key === 'rtg') return sum + rtgAutoCount.RIGIDO;
+    return sum + (Number(manualCounts.RIGIDO[cat.key]) || 0);
+  }, 0);
+  const rigidoTotalDisponibles = rigidoFlotaTotal - fueraServicioOT.RIGIDO - rigidoSumManual;
+  const rigidoDiferencia = rigidoTotalDisponibles - po.RIGIDO;
+
+  // Calculations for Articulado
+  const artFlotaTotal = rows.filter(r => r.tipo === 'ARTICULADO').length;
+  const artSumManual = CATEGORIES.reduce((sum, cat) => {
+    if (cat.key === 'rtg') return sum + rtgAutoCount.ARTICULADO;
+    return sum + (Number(manualCounts.ARTICULADO[cat.key]) || 0);
+  }, 0);
+  const artTotalDisponibles = artFlotaTotal - fueraServicioOT.ARTICULADO - artSumManual;
+  const artDiferencia = artTotalDisponibles - po.ARTICULADO;
 
   const TableBlock = ({ title, tipo, flotaTotal, fueraServicioOT, totalDisponibles, diferencia }) => (
     <div style={{ marginBottom: '10px', border: '1px solid #000', fontFamily: 'sans-serif', fontSize: '11px' }}>
@@ -409,20 +437,29 @@ export function ControlPannesPanel({ rows }) {
       </div>
 
       {/* Manual Rows */}
-      {CATEGORIES.map(cat => (
+      {CATEGORIES.map(cat => {
+        const isRtg = cat.key === 'rtg';
+        const val = isRtg ? rtgAutoCount[tipo] : (manualCounts[tipo][cat.key] !== undefined ? manualCounts[tipo][cat.key] : 0);
+        return (
         <div key={cat.key} style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: cat.color }}>
           <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', display: 'flex', alignItems: 'center' }}>{cat.label}</div>
           <div style={{ width: '100px', padding: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <input 
-              type="number" 
-              value={manualCounts[tipo][cat.key] !== undefined ? manualCounts[tipo][cat.key] : 0} 
-              onChange={(e) => handleManualCountChange(tipo, cat.key, e.target.value)}
-              style={{ width: '100%', height: '100%', border: 'none', textAlign: 'center', backgroundColor: 'transparent', outline: 'none', margin: 0, padding: 0, fontSize: '15px', fontWeight: 'bold' }}
-              min="0"
-            />
+            {isRtg ? (
+              <div style={{ width: '100%', height: '100%', textAlign: 'center', margin: 0, padding: '4px', fontSize: '15px', fontWeight: 'bold' }}>
+                {val}
+              </div>
+            ) : (
+              <input 
+                type="number" 
+                value={val} 
+                onChange={(e) => handleManualCountChange(tipo, cat.key, e.target.value)}
+                style={{ width: '100%', height: '100%', border: 'none', textAlign: 'center', backgroundColor: 'transparent', outline: 'none', margin: 0, padding: 0, fontSize: '15px', fontWeight: 'bold' }}
+                min="0"
+              />
+            )}
           </div>
         </div>
-      ))}
+      )})}
 
       {/* TOTAL DISPONIBLES */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#90cdf4', fontWeight: 'bold' }}>
@@ -600,6 +637,7 @@ export function ControlPannesPanel({ rows }) {
                   <tr>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>NUMERO INTERNO</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>PPU</th>
+                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>TIPO</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>FECHA</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>HORA</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>OBSERVACION</th>
@@ -617,6 +655,7 @@ export function ControlPannesPanel({ rows }) {
                       <tr key={idx} style={{ backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.interno}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.ppu}</td>
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center', fontWeight: 'bold' }}>{b.tipo}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.fecha}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.hora}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'left' }}>{b.observacion}</td>
