@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
-import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight, BarChart2, FileCheck } from 'lucide-react';
+import { CalendarClock, Building2, LayoutGrid, Menu, Radio, Settings, ShieldCheck, X, Download, Fuel, Eraser, ChevronLeft, ChevronRight, BarChart2, FileCheck, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { EditableTable } from './components/EditableTable';
 import { FiltersBar } from './components/FiltersBar';
@@ -58,6 +59,51 @@ function App() {
   const [nfcMessage, setNfcMessage] = useState('');
   const [nfcError, setNfcError] = useState('');
   const [nfcSaving, setNfcSaving] = useState(false);
+
+  const [otPannesData, setOtPannesData] = useState([]);
+
+  const parseExcelFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          
+          const jsonRaw = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          let headerRowIndex = 0;
+          for (let i = 0; i < Math.min(10, jsonRaw.length); i++) {
+            const rowStr = (jsonRaw[i] || []).join(' ').toLowerCase();
+            if (rowStr.includes('ppu') || rowStr.includes('patente') || rowStr.includes('interno') || rowStr.includes('folio')) {
+              headerRowIndex = i;
+              break;
+            }
+          }
+
+          const sheetData = XLSX.utils.sheet_to_json(firstSheet, { range: headerRowIndex, raw: true, defval: "" });
+          resolve(sheetData);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = () => reject(new Error('Error al leer el archivo.'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const handleUploadOtPannes = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await parseExcelFile(file);
+      setOtPannesData(data);
+      alert('Archivo OT cargado exitosamente. Ahora al pistolear se autollenará si hay coincidencias.');
+    } catch (err) {
+      alert('Error cargando OT: ' + err.message);
+    }
+    e.target.value = null;
+  };
   const [nfcSearching, setNfcSearching] = useState(false);
   const [currentNfcUid, setCurrentNfcUid] = useState('');
   const [currentNfcBus, setCurrentNfcBus] = useState(null);
@@ -642,6 +688,11 @@ function App() {
                       <Eraser size={13} />
                       Limpiar Reporte
                     </button>
+                    <label className="secondary-button" style={{ cursor: 'pointer' }} title="Subir archivo Excel de Pannes OT">
+                      <Upload size={13} />
+                      Subir Pannes OT
+                      <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleUploadOtPannes} />
+                    </label>
                     <button
                       id="btn-export-excel"
                       className="secondary-button"
@@ -758,6 +809,7 @@ function App() {
             bus={currentNfcBus}
             terminalFilter={workTerminal}
             scheduledMaintenance={scheduledMaintenance}
+            otPannesData={otPannesData}
             fuelLitros={currentFuelLitros}
             telemetryPct={currentTelemetryPct}
             saving={nfcSaving}

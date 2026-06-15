@@ -18,6 +18,7 @@ export function NfcOperModal({
   bus,
   terminalFilter,
   scheduledMaintenance,
+  otPannesData,
   fuelLitros,
   telemetryPct,
   saving,
@@ -99,6 +100,34 @@ export function NfcOperModal({
       setOtNumber('');
     }
   }, [defaultTerminal, open, nfcUid, scheduledMaintenance]);
+
+  const otRecord = useMemo(() => {
+    if (!otPannesData || !bus?.ppu) return null;
+    return otPannesData.find(row => {
+      const ppuRaw = (row['PPU'] || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const busPpu = (bus.ppu || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+      return ppuRaw && busPpu && ppuRaw === busPpu;
+    });
+  }, [otPannesData, bus]);
+
+  const handleAutofillOT = () => {
+    if (!otRecord) return;
+    const isPreventiva = String(otRecord['Tipo OT'] || '').toUpperCase() === 'PREVENTIVA';
+    const tipoOt = String(otRecord['Tipo OT'] || '').toUpperCase() || '';
+    const otNum = otRecord['Número OT'] || '';
+    const detalleStr = String(isPreventiva ? (otRecord['Detalle ingreso'] || '') : (otRecord['Detalle correctiva'] || ''));
+    
+    const isVidrio = detalleStr.toLowerCase().includes('vidrio') || String(otRecord['Motivo panne'] || '').toLowerCase().includes('vidrio');
+
+    setForm((current) => ({
+      ...current,
+      ...buildExclusiveProblemPatch(isVidrio ? 'vidrio' : 'mant'),
+      detalle_panne: tipoOt,
+      observaciones: scheduledMaintenance?.turno ? `${detalleStr} - ${scheduledMaintenance.turno}` : detalleStr,
+    }));
+    
+    setOtNumber(otNum);
+  };
 
   const selectedProblem = PROBLEM_FIELDS.find((field) => String(form[field] ?? '').toUpperCase() === 'X');
   const showDetails = Boolean(selectedProblem);
@@ -216,6 +245,34 @@ export function NfcOperModal({
               </div>
               <div style={{ fontSize: '13px' }}>
                 <strong>Observación:</strong> {scheduledMaintenance.detalle || 'Sin observaciones'}
+              </div>
+            </div>
+          )}
+
+          {otRecord && (
+            <div className="banner banner-error" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '4px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong style={{ fontSize: '15px' }}>ALERTA DE PANNE (SEGÚN EXCEL OT)</strong>
+                  </div>
+                  <div style={{ fontSize: '13px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
+                    <div><strong>PPU:</strong> {otRecord['PPU']}</div>
+                    <div><strong>Número OT:</strong> {otRecord['Número OT']}</div>
+                    <div><strong>Tipo OT:</strong> {otRecord['Tipo OT']}</div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Detalle:</strong> {String(otRecord['Tipo OT'] || '').toUpperCase() === 'PREVENTIVA' ? otRecord['Detalle ingreso'] : otRecord['Detalle correctiva']}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={handleAutofillOT}
+                  style={{ backgroundColor: '#dc2626', borderColor: '#b91c1c' }}
+                >
+                  Rellenar
+                </button>
               </div>
             </div>
           )}
