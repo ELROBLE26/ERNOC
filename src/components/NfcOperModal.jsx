@@ -30,12 +30,12 @@ export function NfcOperModal({
   const [otNumber, setOtNumber] = useState('');
   
   const [docs, setDocs] = useState({
-    permiso_circulacion: false,
-    soap: false,
-    revision_tecnica: false,
-    revision_gases: false,
-    certificado_recorrido: false,
-    certificado_inscripcion: false,
+    permiso_circulacion: true,
+    soap: true,
+    revision_tecnica: true,
+    revision_gases: true,
+    certificado_recorrido: true,
+    certificado_inscripcion: true,
   });
   const [showDocs, setShowDocs] = useState(false);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -57,12 +57,12 @@ export function NfcOperModal({
             });
           } else {
             setDocs({
-              permiso_circulacion: false,
-              soap: false,
-              revision_tecnica: false,
-              revision_gases: false,
-              certificado_recorrido: false,
-              certificado_inscripcion: false,
+              permiso_circulacion: true,
+              soap: true,
+              revision_tecnica: true,
+              revision_gases: true,
+              certificado_recorrido: true,
+              certificado_inscripcion: true,
             });
           }
         } catch (err) {
@@ -454,15 +454,15 @@ function DocRow({ label, value, onChange, driveLink }) {
     <div style={{ 
       display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
       padding: '12px 16px', border: '1px solid', 
-      borderColor: value === true ? 'var(--success-200)' : (value === false ? 'var(--danger-200)' : 'var(--gray-200)'), 
+      borderColor: value === true ? '#bbf7d0' : (value === false ? '#fecaca' : '#e5e7eb'), 
       borderRadius: '10px', marginBottom: '8px', 
-      background: value === true ? 'var(--success-50)' : (value === false ? 'var(--danger-50)' : 'white'),
+      background: value === true ? '#f0fdf4' : (value === false ? '#fef2f2' : '#ffffff'),
       transition: 'all 0.2s ease-in-out'
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <span style={{ 
           fontWeight: '700', fontSize: '15px', 
-          color: value === true ? 'var(--success-800)' : (value === false ? 'var(--danger-800)' : 'var(--gray-800)') 
+          color: value === true ? '#166534' : (value === false ? '#991b1b' : '#374151') 
         }}>{label}</span>
         {value === false && driveLink && (
           <a 
@@ -471,23 +471,23 @@ function DocRow({ label, value, onChange, driveLink }) {
             rel="noreferrer"
             style={{ 
               display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', 
-              color: 'var(--danger-700)', textDecoration: 'none', background: 'white', 
+              color: '#b91c1c', textDecoration: 'none', background: '#ffffff', 
               padding: '6px 10px', borderRadius: '6px', fontWeight: 'bold', width: 'fit-content', 
-              border: '1px solid var(--danger-300)', marginTop: '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              border: '1px solid #fca5a5', marginTop: '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}
           >
             <Printer size={14} /> Buscar e Imprimir
           </a>
         )}
       </div>
-      <div style={{ display: 'flex', background: 'var(--gray-100)', padding: '4px', borderRadius: '8px', gap: '4px' }}>
+      <div style={{ display: 'flex', background: '#f3f4f6', padding: '4px', borderRadius: '8px', gap: '4px' }}>
         <button
           type="button"
           onClick={() => onChange(true)}
           style={{
             padding: '8px 16px', borderRadius: '6px', border: 'none',
-            background: value === true ? 'var(--success-500)' : 'transparent',
-            color: value === true ? 'white' : 'var(--gray-600)',
+            background: value === true ? '#22c55e' : 'transparent',
+            color: value === true ? '#ffffff' : '#6b7280',
             cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s', 
             boxShadow: value === true ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
           }}
@@ -504,8 +504,8 @@ function DocRow({ label, value, onChange, driveLink }) {
           }}
           style={{
             padding: '8px 16px', borderRadius: '6px', border: 'none',
-            background: value === false ? 'var(--danger-500)' : 'transparent',
-            color: value === false ? 'white' : 'var(--gray-600)',
+            background: value === false ? '#ef4444' : 'transparent',
+            color: value === false ? '#ffffff' : '#6b7280',
             cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s', 
             boxShadow: value === false ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
           }}
