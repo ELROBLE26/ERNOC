@@ -143,6 +143,8 @@ export function EditableTable({
               <th className="sticky-col sticky-num">N°</th>
               <th className="sticky-col sticky-ppu" style={{ minWidth: '90px', maxWidth: '90px', width: '90px' }}>PPU</th>
               <th className="zone-cell">ZONA</th>
+              <th>MODELO</th>
+              <th>ASIGNACIÓN</th>
               <th className="service-cell">SERVICIO</th>
               {PROBLEM_COLUMNS.map((column) => (
                 <th className="problem-header" key={column.field} title={column.field.toUpperCase()}>
@@ -196,6 +198,12 @@ export function EditableTable({
                       </td>
                       <td className="zone-cell">
                         <ReadOnlyCell value={row.zona} />
+                      </td>
+                      <td>
+                        <ReadOnlyCell value={row.modelo} />
+                      </td>
+                      <td>
+                        <ReadOnlyCell value={row.asignacion} />
                       </td>
                       <td className="service-cell">
                         {wizardActive && wizardRowId === row.id ? (
