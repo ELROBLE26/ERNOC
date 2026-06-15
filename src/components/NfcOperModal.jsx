@@ -100,11 +100,11 @@ export function NfcOperModal({
 
   useEffect(() => {
     if (open) {
-      setForm(buildInitialForm(defaultTerminal, scheduledMaintenance));
+      setForm(buildInitialForm(defaultTerminal, scheduledMaintenance, bus));
       setOtNumber('');
       setActiveSection('problem');
     }
-  }, [defaultTerminal, open, nfcUid, scheduledMaintenance]);
+  }, [defaultTerminal, open, nfcUid, scheduledMaintenance, bus]);
 
   const otRecord = useMemo(() => {
     if (!otPannesData || !bus?.ppu) return null;
@@ -453,14 +453,35 @@ export function NfcOperModal({
             <button className="nfcv2-btn-secondary" type="button" onClick={onCancel}>
               Cancelar
             </button>
-            <button
-              className="nfcv2-btn-secondary nfcv2-btn-quick"
-              type="button"
-              onClick={() => handleSaveWrapper({ ...buildInitialForm(form.terminal), terminal: form.terminal })}
-              disabled={!canSave || saving}
-            >
-              <Zap size={12} /> Operativo Rápido
-            </button>
+            {bus && PROBLEM_FIELDS.some(field => String(bus[field] ?? '').toUpperCase() === 'X') ? (
+              <button
+                className="nfcv2-btn-secondary nfcv2-btn-quick"
+                style={{ backgroundColor: 'var(--success-600)', color: 'white', borderColor: 'var(--success-600)' }}
+                type="button"
+                onClick={() => {
+                  if (window.confirm('¿Desea reparar la falla, limpiar los registros y dejar el bus OPERATIVO?')) {
+                    handleSaveWrapper({ 
+                      ...buildInitialForm(form.terminal), 
+                      terminal: form.terminal,
+                      servicio: 'OPERATIVO LIBRE',
+                      estado: 'OPERATIVO'
+                    });
+                  }
+                }}
+                disabled={!canSave || saving}
+              >
+                <Zap size={12} color="white" /> Levantar Bus
+              </button>
+            ) : (
+              <button
+                className="nfcv2-btn-secondary nfcv2-btn-quick"
+                type="button"
+                onClick={() => handleSaveWrapper({ ...buildInitialForm(form.terminal), terminal: form.terminal, servicio: 'OPERATIVO LIBRE', estado: 'OPERATIVO' })}
+                disabled={!canSave || saving}
+              >
+                <Zap size={12} /> Operativo Rápido
+              </button>
+            )}
             <button
               className="nfcv2-btn-primary"
               type="button"
@@ -476,11 +497,11 @@ export function NfcOperModal({
   );
 }
 
-function buildInitialForm(terminal, scheduledMaintenance) {
+function buildInitialForm(terminal, scheduledMaintenance, bus) {
   if (scheduledMaintenance) {
     return {
       terminal,
-      estado: 'NO OPERATIVO',
+      estado: 'PENDIENTE',
       oper: '',
       vidrio: '',
       mant: 'X',
@@ -491,7 +512,29 @@ function buildInitialForm(terminal, scheduledMaintenance) {
       detalle_panne: 'PREVENTIVA',
       observaciones: scheduledMaintenance.turno,
       ubicacion: terminal,
+      servicio: '',
     };
+  }
+
+  if (bus) {
+    const hasExistingProblem = PROBLEM_FIELDS.some(field => String(bus[field] ?? '').toUpperCase() === 'X');
+    if (hasExistingProblem) {
+      return {
+        terminal: bus.terminal || terminal,
+        estado: bus.estado || 'PENDIENTE',
+        oper: bus.oper || '',
+        vidrio: bus.vidrio || '',
+        mant: bus.mant || '',
+        calidad: bus.calidad || '',
+        adq: bus.adq || '',
+        aft: bus.aft || '',
+        sinies: bus.sinies || '',
+        detalle_panne: bus.detalle_panne || '',
+        observaciones: bus.observaciones || '',
+        ubicacion: bus.ubicacion || terminal,
+        servicio: bus.servicio || '',
+      };
+    }
   }
 
   return {
@@ -507,7 +550,7 @@ function buildInitialForm(terminal, scheduledMaintenance) {
     detalle_panne: '',
     observaciones: '',
     ubicacion: terminal,
-    servicio: 'Operativo Libre',
+    servicio: 'OPERATIVO LIBRE',
   };
 }
 
