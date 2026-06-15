@@ -357,7 +357,7 @@ export function ControlPannesPanel({ rows }) {
         return k ? row[k] : '';
       };
       
-      const interno = getVal(/c[oó]digo|interno/i) || row['Código'] || '';
+      const interno = getVal(/c[oó]digo|interno/i) || row['Código'] || row['Codigo'] || row['N° Interno Bus'] || row['Nro interno'] || row['N° interno'] || '';
       const ppu = getVal(/ppu|patente/i) || row['PPU'] || '';
       let fechaRaw = getVal(/fecha/i) || row['Fecha'] || '';
       const horaRaw = getVal(/hora/i) || row['Hora'] || '';
@@ -447,7 +447,7 @@ export function ControlPannesPanel({ rows }) {
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: diferencia >= 0 ? '#c6f6d5' : '#fed7d7', fontWeight: 'bold' }}>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>Diferencia P.O</div>
         <div style={{ width: '100px', padding: '0px', textAlign: 'center', color: diferencia >= 0 ? '#2f855a' : '#c53030', fontSize: '15px', alignContent: 'center' }}>
-          {diferencia > 0 ? `+${diferencia}` : diferencia}
+          {diferencia}
         </div>
       </div>
     </div>
