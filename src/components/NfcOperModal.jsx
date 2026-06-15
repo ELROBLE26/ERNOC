@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { PROBLEM_FIELDS, buildExclusiveProblemPatch } from '../utils/fleet';
-import { X, ChevronDown, ChevronUp, ExternalLink, Printer } from 'lucide-react';
+import {
+  X, ChevronDown, ChevronUp, Printer, Fuel, Gauge, Bus, MapPin,
+  AlertTriangle, Wrench, ClipboardCheck, FileText, Zap, Clock, Shield
+} from 'lucide-react';
 import { getDocumentRevisionByPpu, upsertDocumentRevision } from '../lib/documentService';
+
 const PROBLEM_COLUMNS = [
-  { field: 'oper',    label: 'OPER' },
-  { field: 'vidrio',  label: 'VIDRIO' },
-  { field: 'mant',    label: 'MANT' },
-  { field: 'calidad', label: 'CALIDAD' },
-  { field: 'adq',     label: 'ADQ' },
-  { field: 'aft',     label: 'AFT' },
-  { field: 'sinies',  label: 'SINIES' },
+  { field: 'oper',    label: 'OPER',    icon: Bus },
+  { field: 'vidrio',  label: 'VIDRIO',  icon: Shield },
+  { field: 'mant',    label: 'MANT',    icon: Wrench },
+  { field: 'calidad', label: 'CALIDAD', icon: ClipboardCheck },
+  { field: 'adq',     label: 'ADQ',     icon: FileText },
+  { field: 'aft',     label: 'AFT',     icon: AlertTriangle },
+  { field: 'sinies',  label: 'SINIES',  icon: Zap },
 ];
 
 export function NfcOperModal({
@@ -29,6 +33,7 @@ export function NfcOperModal({
   const defaultTerminal = terminalFilter;
   const [form, setForm] = useState(() => buildInitialForm(defaultTerminal, scheduledMaintenance));
   const [otNumber, setOtNumber] = useState('');
+  const [activeSection, setActiveSection] = useState('problem'); // 'problem' | 'docs'
   
   const [docs, setDocs] = useState({
     permiso_circulacion: true,
@@ -38,7 +43,6 @@ export function NfcOperModal({
     certificado_recorrido: true,
     certificado_inscripcion: true,
   });
-  const [showDocs, setShowDocs] = useState(false);
   const [docsLoading, setDocsLoading] = useState(false);
 
   useEffect(() => {
@@ -98,6 +102,7 @@ export function NfcOperModal({
     if (open) {
       setForm(buildInitialForm(defaultTerminal, scheduledMaintenance));
       setOtNumber('');
+      setActiveSection('problem');
     }
   }, [defaultTerminal, open, nfcUid, scheduledMaintenance]);
 
@@ -202,231 +207,267 @@ export function NfcOperModal({
   };
 
   const hasFuel = fuelLitros > 0;
+  const hasProblem = Boolean(selectedProblem);
+  const docsOk = Object.values(docs).filter(Boolean).length;
+  const docsTotal = Object.values(docs).length;
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+
+  // Determine accent color based on state
+  const accentColor = scheduledMaintenance ? '#d97706' : otRecord ? '#dc2626' : '#2563eb';
+  const accentGradient = scheduledMaintenance
+    ? 'linear-gradient(90deg, #d97706, #f59e0b, #fbbf24)'
+    : otRecord
+    ? 'linear-gradient(90deg, #dc2626, #ef4444, #f87171)'
+    : 'linear-gradient(90deg, #1e3a5f, #2563eb, #60a5fa)';
 
   return (
     <div className="modal-backdrop" role="presentation">
       <section
-        className="modal-card nfc-modal"
+        className="nfc-modal-v2"
         role="dialog"
         aria-modal="true"
         aria-labelledby="nfc-oper-title"
-        style={{ maxWidth: '600px' }}
       >
-        <div className={`modal-accent-bar ${scheduledMaintenance ? 'maintenance-accent-bar' : ''}`} style={scheduledMaintenance ? { background: 'var(--warning-500)' } : {}} />
-        <div className="modal-content">
-          <div className="modal-header">
-            <div>
-              <h2 id="nfc-oper-title">Lectura NFC detectada</h2>
-              <p>UID: <strong style={{ fontFamily: 'monospace', color: 'var(--navy-700)' }}>{nfcUid}</strong></p>
+        {/* ── ACCENT BAR ──────────────────────────────── */}
+        <div className="nfcv2-accent" style={{ background: accentGradient }} />
+
+        {/* ── HEADER ──────────────────────────────────── */}
+        <div className="nfcv2-header">
+          <div className="nfcv2-header-left">
+            <div className="nfcv2-bus-avatar" style={{ background: `${accentColor}15`, borderColor: `${accentColor}40`, color: accentColor }}>
+              <Bus size={20} />
             </div>
+            <div className="nfcv2-header-info">
+              <div className="nfcv2-ppu">{bus?.ppu || '—'}</div>
+              <div className="nfcv2-meta-row">
+                <span className="nfcv2-cod-badge">COD {bus?.cod || '—'}</span>
+                <span className="nfcv2-terminal-badge">
+                  <MapPin size={10} /> {form.terminal || '—'}
+                </span>
+                <span className="nfcv2-time-badge">
+                  <Clock size={10} /> {timeStr}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="nfcv2-header-right">
+            <span className="nfcv2-uid">UID: {nfcUid}</span>
+            <button className="nfcv2-close" type="button" onClick={onCancel} aria-label="Cerrar">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── QUICK STATUS STRIP ──────────────────────── */}
+        <div className="nfcv2-status-strip">
+          <div className={`nfcv2-status-card ${hasFuel ? 'nfcv2-status-ok' : 'nfcv2-status-warn'}`}>
+            <Fuel size={16} />
+            <div>
+              <strong>{hasFuel ? `${fuelLitros} L` : 'PENDIENTE'}</strong>
+              <span>Combustible</span>
+            </div>
+          </div>
+          <div className={`nfcv2-status-card ${telemetryPct ? 'nfcv2-status-ok' : 'nfcv2-status-neutral'}`}>
+            <Gauge size={16} />
+            <div>
+              <strong>{telemetryPct ? `${telemetryPct}%` : '—'}</strong>
+              <span>Tanque</span>
+            </div>
+          </div>
+          <div className={`nfcv2-status-card ${docsOk === docsTotal ? 'nfcv2-status-ok' : 'nfcv2-status-warn'}`}>
+            <FileText size={16} />
+            <div>
+              <strong>{docsOk}/{docsTotal}</strong>
+              <span>Documentos</span>
+            </div>
+          </div>
+          <div className={`nfcv2-status-card ${hasProblem ? 'nfcv2-status-danger' : 'nfcv2-status-ok'}`}>
+            <AlertTriangle size={16} />
+            <div>
+              <strong>{hasProblem ? selectedProblem.toUpperCase() : 'NINGUNO'}</strong>
+              <span>Problema</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── ALERTS ──────────────────────────────────── */}
+        {scheduledMaintenance && (
+          <div className="nfcv2-alert nfcv2-alert-warning">
+            <div className="nfcv2-alert-icon">
+              <Wrench size={16} />
+            </div>
+            <div className="nfcv2-alert-body">
+              <strong>MANTENCIÓN PROGRAMADA — {scheduledMaintenance.turno}</strong>
+              <div className="nfcv2-alert-details">
+                <span>Fecha: {new Date(scheduledMaintenance.fechaProgramada).toLocaleString('es-CL')}</span>
+                <span>Obs: {scheduledMaintenance.detalle || 'Sin observaciones'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {otRecord && (
+          <div className="nfcv2-alert nfcv2-alert-danger">
+            <div className="nfcv2-alert-icon">
+              <AlertTriangle size={16} />
+            </div>
+            <div className="nfcv2-alert-body">
+              <strong>PANNE OT DETECTADA</strong>
+              <div className="nfcv2-alert-details">
+                <span>OT: {otRecord['Número OT']} · {otRecord['Tipo OT']}</span>
+                <span>Detalle: {String(otRecord['Tipo OT'] || '').toUpperCase() === 'PREVENTIVA' ? otRecord['Detalle ingreso'] : otRecord['Detalle correctiva']}</span>
+              </div>
+            </div>
+            <button type="button" className="nfcv2-autofill-btn" onClick={handleAutofillOT}>
+              <Zap size={13} /> Rellenar
+            </button>
+          </div>
+        )}
+
+        {/* ── SCROLLABLE CONTENT ──────────────────────── */}
+        <div className="nfcv2-body">
+          {/* Tab Navigation */}
+          <div className="nfcv2-tabs">
             <button
-              className="icon-only-button"
               type="button"
-              onClick={onCancel}
-              aria-label="Cerrar"
+              className={`nfcv2-tab ${activeSection === 'problem' ? 'nfcv2-tab-active' : ''}`}
+              onClick={() => setActiveSection('problem')}
             >
-              <X size={14} />
+              <Wrench size={13} /> Operatividad
+            </button>
+            <button
+              type="button"
+              className={`nfcv2-tab ${activeSection === 'docs' ? 'nfcv2-tab-active' : ''}`}
+              onClick={() => setActiveSection('docs')}
+            >
+              <FileText size={13} /> Documentos
+              {docsOk < docsTotal && (
+                <span className="nfcv2-tab-badge">{docsTotal - docsOk}</span>
+              )}
             </button>
           </div>
 
-          <div className="nfc-bus-strip">
-            <DataPoint label="COD"      value={bus?.cod} />
-            <DataPoint label="PPU"      value={<span style={{ fontSize: '1.4rem', fontWeight: 900, letterSpacing: '1px' }}>{bus?.ppu}</span>} />
-            <DataPoint label="Terminal" value={form.terminal || 'Seleccionar'} />
-          </div>
-
-          {scheduledMaintenance && (
-            <div className="banner banner-warning" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div>
-                <strong>¡MANTENCIÓN PROGRAMADA! ({scheduledMaintenance.turno})</strong>
-              </div>
-              <div style={{ fontSize: '13px' }}>
-                <strong>Fecha:</strong> {new Date(scheduledMaintenance.fechaProgramada).toLocaleString('es-CL')}
-              </div>
-              <div style={{ fontSize: '13px' }}>
-                <strong>Observación:</strong> {scheduledMaintenance.detalle || 'Sin observaciones'}
-              </div>
-            </div>
-          )}
-
-          {otRecord && (
-            <div className="banner banner-error" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '4px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong style={{ fontSize: '15px' }}>ALERTA DE PANNE (SEGÚN EXCEL OT)</strong>
-                  </div>
-                  <div style={{ fontSize: '13px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
-                    <div><strong>PPU:</strong> {otRecord['PPU']}</div>
-                    <div><strong>Número OT:</strong> {otRecord['Número OT']}</div>
-                    <div><strong>Tipo OT:</strong> {otRecord['Tipo OT']}</div>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <strong>Detalle:</strong> {String(otRecord['Tipo OT'] || '').toUpperCase() === 'PREVENTIVA' ? otRecord['Detalle ingreso'] : otRecord['Detalle correctiva']}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={handleAutofillOT}
-                  style={{ backgroundColor: '#dc2626', borderColor: '#b91c1c' }}
-                >
-                  Rellenar
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            borderRadius: '8px',
-            backgroundColor: hasFuel ? 'var(--success-50)' : 'var(--danger-50)',
-            border: `2px solid ${hasFuel ? 'var(--success-200)' : 'var(--danger-200)'}`,
-            margin: '16px 0'
-          }}>
-            <strong style={{
-              fontSize: '28px',
-              color: hasFuel ? 'var(--success-700)' : 'var(--danger-700)',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
-              {hasFuel ? 'CARGADO' : 'PENDIENTE'}
-            </strong>
-            <div style={{ display: 'flex', gap: '24px', marginTop: '8px' }}>
-              {hasFuel && (
-                <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--success-800)' }}>
-                  {fuelLitros} L
-                </span>
-              )}
-              {telemetryPct && (
-                <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--navy-800)' }}>
-                  {telemetryPct}% Tanque
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="modal-grid nfc-status-grid">
-            <div className="modal-wide-field nfc-problem-picker">
-              <span>Marcar problema</span>
-              <div className="problem-picker-grid">
+          {/* ── PROBLEM SECTION ─────────────────────── */}
+          {activeSection === 'problem' && (
+            <div className="nfcv2-section">
+              <div className="nfcv2-section-label">Marcar Problema</div>
+              <div className="nfcv2-problem-grid">
                 {PROBLEM_COLUMNS.map((column) => {
                   const active = String(form[column.field] ?? '').toUpperCase() === 'X';
+                  const Icon = column.icon;
                   return (
                     <button
                       key={column.field}
-                      className={`modal-problem-toggle ${active ? 'problem-toggle-active' : ''}`}
+                      className={`nfcv2-problem-btn ${active ? 'nfcv2-problem-active' : ''}`}
                       type="button"
                       onClick={() => setProblem(column.field)}
                       aria-pressed={active}
                     >
-                      {active ? '✓' : ''}
-                      <small>{column.label}</small>
+                      <Icon size={15} />
+                      <span>{column.label}</span>
+                      {active && <div className="nfcv2-problem-check">✓</div>}
                     </button>
                   );
                 })}
               </div>
+
+              {showDetails && (
+                <div className="nfcv2-detail-fields">
+                  <div className="nfcv2-field">
+                    <label>Número de OT</label>
+                    <input
+                      type="text"
+                      value={otNumber}
+                      onChange={(e) => setOtNumber(e.target.value)}
+                      placeholder="Ej: 123456"
+                    />
+                  </div>
+                  <div className="nfcv2-field">
+                    <label>Detalle Panne</label>
+                    <input
+                      type="text"
+                      value={form.detalle_panne}
+                      onChange={(e) => updateField('detalle_panne', e.target.value)}
+                      placeholder="Tipo de falla"
+                    />
+                  </div>
+                  <div className="nfcv2-field nfcv2-field-full">
+                    <label>Observaciones</label>
+                    <textarea
+                      value={form.observaciones}
+                      onChange={(e) => updateField('observaciones', e.target.value)}
+                      rows={2}
+                      placeholder="Descripción detallada..."
+                    />
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-            {showDetails ? (
-              <>
-                <TextInput
-                  label="Número de OT (Opcional)"
-                  value={otNumber}
-                  onChange={setOtNumber}
-                />
-                <TextInput
-                  label="Detalle Panne"
-                  value={form.detalle_panne}
-                  onChange={(value) => updateField('detalle_panne', value)}
-                />
-                <TextInput
-                  label="Observaciones"
-                  value={form.observaciones}
-                  onChange={(value) => updateField('observaciones', value)}
-                />
-              </>
-            ) : null}
+          {/* ── DOCS SECTION ────────────────────────── */}
+          {activeSection === 'docs' && (
+            <div className="nfcv2-section">
+              {docsLoading ? (
+                <p style={{ padding: '16px', color: '#64748b', textAlign: 'center' }}>Cargando documentos…</p>
+              ) : (
+                <div className="nfcv2-docs-grid">
+                  <DocRow 
+                    label="Permiso de Circulación" 
+                    value={docs.permiso_circulacion} 
+                    onChange={(v) => setDocs(d => ({ ...d, permiso_circulacion: v }))} 
+                    driveLink={bus?.ppu ? `https://drive.google.com/drive/search?q=${encodeURIComponent(`"${bus.ppu}" parent:1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0`)}` : "https://drive.google.com/drive/folders/1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0"}
+                  />
+                  <DocRow 
+                    label="SOAP" 
+                    value={docs.soap} 
+                    onChange={(v) => setDocs(d => ({ ...d, soap: v }))} 
+                    driveLink={bus?.ppu ? `https://drive.google.com/drive/search?q=${encodeURIComponent(`"${bus.ppu}" parent:1MYrseSdneeob9mm3ap7wyFStrEax0PzN`)}` : "https://drive.google.com/drive/folders/1MYrseSdneeob9mm3ap7wyFStrEax0PzN"}
+                  />
+                  <DocRow label="Revisión Técnica" value={docs.revision_tecnica} onChange={(v) => setDocs(d => ({ ...d, revision_tecnica: v }))} />
+                  <DocRow label="Revisión Gases" value={docs.revision_gases} onChange={(v) => setDocs(d => ({ ...d, revision_gases: v }))} />
+                  <DocRow label="Cert. Recorrido" value={docs.certificado_recorrido} onChange={(v) => setDocs(d => ({ ...d, certificado_recorrido: v }))} />
+                  <DocRow label="Cert. Inscripción" value={docs.certificado_inscripcion} onChange={(v) => setDocs(d => ({ ...d, certificado_inscripcion: v }))} />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── ERROR ───────────────────────────────────── */}
+        {error && (
+          <div className="nfcv2-error">
+            <AlertTriangle size={13} /> {error}
           </div>
+        )}
 
-          <div style={{ marginTop: '16px', border: '1px solid var(--gray-200)', borderRadius: '8px', overflow: 'hidden' }}>
-            <button 
-              type="button" 
-              onClick={() => setShowDocs(!showDocs)}
-              style={{ width: '100%', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--gray-50)', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'var(--gray-700)' }}
-            >
-              <span>Revisión de Documentos</span>
-              {showDocs ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            {showDocs && (
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'white' }}>
-                {docsLoading ? (
-                  <p>Cargando documentos...</p>
-                ) : (
-                  <>
-                    <DocRow 
-                      label="Permiso de Circulación" 
-                      value={docs.permiso_circulacion} 
-                      onChange={(v) => setDocs(d => ({ ...d, permiso_circulacion: v }))} 
-                      driveLink={bus?.ppu ? `https://drive.google.com/drive/search?q=${encodeURIComponent(`"${bus.ppu}" parent:1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0`)}` : "https://drive.google.com/drive/folders/1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0"}
-                    />
-                    <DocRow 
-                      label="SOAP" 
-                      value={docs.soap} 
-                      onChange={(v) => setDocs(d => ({ ...d, soap: v }))} 
-                      driveLink={bus?.ppu ? `https://drive.google.com/drive/search?q=${encodeURIComponent(`"${bus.ppu}" parent:1MYrseSdneeob9mm3ap7wyFStrEax0PzN`)}` : "https://drive.google.com/drive/folders/1MYrseSdneeob9mm3ap7wyFStrEax0PzN"}
-                    />
-                    <DocRow 
-                      label="Revisión Técnica" 
-                      value={docs.revision_tecnica} 
-                      onChange={(v) => setDocs(d => ({ ...d, revision_tecnica: v }))} 
-                    />
-                    <DocRow 
-                      label="Revisión Gases" 
-                      value={docs.revision_gases} 
-                      onChange={(v) => setDocs(d => ({ ...d, revision_gases: v }))} 
-                    />
-                    <DocRow 
-                      label="Cert. Recorrido" 
-                      value={docs.certificado_recorrido} 
-                      onChange={(v) => setDocs(d => ({ ...d, certificado_recorrido: v }))} 
-                    />
-                    <DocRow 
-                      label="Cert. Inscripción" 
-                      value={docs.certificado_inscripcion} 
-                      onChange={(v) => setDocs(d => ({ ...d, certificado_inscripcion: v }))} 
-                    />
-                  </>
-                )}
-              </div>
-            )}
+        {/* ── FOOTER ACTIONS ─────────────────────────── */}
+        <div className="nfcv2-footer">
+          <div className="nfcv2-footer-status">
+            <span className={`nfcv2-result-pill ${hasProblem ? 'nfcv2-result-danger' : 'nfcv2-result-ok'}`}>
+              {hasProblem ? 'NO OPERATIVO' : 'OPERATIVO'}
+            </span>
           </div>
-
-          {error ? <p className="modal-error">⚠ {error}</p> : null}
-
-          <div className="modal-actions" style={{ marginTop: '24px' }}>
-            <button className="secondary-button" type="button" onClick={onCancel}>
+          <div className="nfcv2-footer-actions">
+            <button className="nfcv2-btn-secondary" type="button" onClick={onCancel}>
               Cancelar
             </button>
             <button
-              className="secondary-button"
+              className="nfcv2-btn-secondary nfcv2-btn-quick"
               type="button"
               onClick={() => handleSaveWrapper({ ...buildInitialForm(form.terminal), terminal: form.terminal })}
               disabled={!canSave || saving}
             >
-              Operativo rápido
+              <Zap size={12} /> Operativo Rápido
             </button>
             <button
-              className="primary-button"
+              className="nfcv2-btn-primary"
               type="button"
               onClick={() => handleSaveWrapper(payload)}
               disabled={!canSave || saving}
             >
-              {saving ? 'Guardando…' : 'Guardar'}
+              {saving ? 'Guardando…' : 'Guardar Registro'}
             </button>
           </div>
         </div>
@@ -470,105 +511,33 @@ function buildInitialForm(terminal, scheduledMaintenance) {
   };
 }
 
-function DataPoint({ label, value }) {
-  return (
-    <div>
-      <span>{label}</span>
-      <strong>{value || '—'}</strong>
-    </div>
-  );
-}
-
-function TextArea({ label, value, onChange }) {
-  return (
-    <label className="field modal-wide-field">
-      <span>{label}</span>
-      <textarea
-        value={value}
-        rows={3}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
-  );
-}
-
-function TextInput({ label, value, onChange }) {
-  return (
-    <label className="field modal-wide-field">
-      <span>{label}</span>
-      <input
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Ej: 12345"
-      />
-    </label>
-  );
-}
-
 function DocRow({ label, value, onChange, driveLink }) {
   return (
-    <div style={{ 
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-      padding: '12px 16px', border: '1px solid', 
-      borderColor: value === true ? '#bbf7d0' : (value === false ? '#fecaca' : '#e5e7eb'), 
-      borderRadius: '10px', marginBottom: '8px', 
-      background: value === true ? '#f0fdf4' : (value === false ? '#fef2f2' : '#ffffff'),
-      transition: 'all 0.2s ease-in-out'
-    }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <span style={{ 
-          fontWeight: '700', fontSize: '15px', 
-          color: value === true ? '#166534' : (value === false ? '#991b1b' : '#374151') 
-        }}>{label}</span>
+    <div className={`nfcv2-doc-row ${value ? 'nfcv2-doc-ok' : 'nfcv2-doc-missing'}`}>
+      <div className="nfcv2-doc-info">
+        <span className="nfcv2-doc-label">{label}</span>
         {value === false && driveLink && (
-          <a 
-            href={driveLink} 
-            target="_blank" 
-            rel="noreferrer"
-            style={{ 
-              display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', 
-              color: '#b91c1c', textDecoration: 'none', background: '#ffffff', 
-              padding: '6px 10px', borderRadius: '6px', fontWeight: 'bold', width: 'fit-content', 
-              border: '1px solid #fca5a5', marginTop: '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-            }}
-          >
-            <Printer size={14} /> Buscar e Imprimir
+          <a href={driveLink} target="_blank" rel="noreferrer" className="nfcv2-doc-print-link">
+            <Printer size={12} /> Buscar e Imprimir
           </a>
         )}
       </div>
-      <div style={{ display: 'flex', background: '#f3f4f6', padding: '4px', borderRadius: '8px', gap: '4px' }}>
+      <div className="nfcv2-doc-toggle">
         <button
           type="button"
+          className={`nfcv2-toggle-btn ${value === true ? 'nfcv2-toggle-yes' : ''}`}
           onClick={() => onChange(true)}
-          style={{
-            padding: '8px 16px', borderRadius: '6px', border: 'none',
-            background: value === true ? '#22c55e' : 'transparent',
-            color: value === true ? '#ffffff' : '#6b7280',
-            cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s', 
-            boxShadow: value === true ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
-          }}
-        >
-          SÍ
-        </button>
+        >SÍ</button>
         <button
           type="button"
+          className={`nfcv2-toggle-btn ${value === false ? 'nfcv2-toggle-no' : ''}`}
           onClick={() => {
             onChange(false);
             if (value !== false && driveLink) {
               window.open(driveLink, '_blank');
             }
           }}
-          style={{
-            padding: '8px 16px', borderRadius: '6px', border: 'none',
-            background: value === false ? '#ef4444' : 'transparent',
-            color: value === false ? '#ffffff' : '#6b7280',
-            cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s', 
-            boxShadow: value === false ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
-          }}
-        >
-          NO
-        </button>
+        >NO</button>
       </div>
     </div>
   );
