@@ -93,7 +93,11 @@ export function EditableTable({
 
   const handleWizardServiceChange = (row, index, val) => {
     if (wizardRowId !== row.id) return; // Evitar doble trigger (Enter + Blur)
-    onSaveCell(row.id, { servicio: val });
+    const patch = { servicio: val };
+    if (val && val.toLowerCase() === 'operativo libre') {
+      patch.estado = 'OPERATIVO';
+    }
+    onSaveCell(row.id, patch);
     if (val && val.toUpperCase().startsWith('T')) {
       advanceWizard(index);
     }
@@ -314,9 +318,9 @@ export function EditableTable({
                               title="Marcar como Operativo"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm('¿Desea reparar la falla y dejar el bus PENDIENTE?')) {
+                                if (window.confirm('¿Desea reparar la falla y dejar el bus OPERATIVO?')) {
                                   onSaveCell(row.id, {
-                                    estado: 'PENDIENTE',
+                                    estado: 'OPERATIVO',
                                     oper: '',
                                     vidrio: '',
                                     mant: '',
@@ -390,20 +394,18 @@ function ServiceInput({ row, onSaveCell, wizardServices }) {
         onBlur={(e) => {
           let finalVal = e.target.value;
           const typedVal = finalVal.trim().toLowerCase();
-          let isOperAutocomplete = false;
           
           if (typedVal === 'oper') {
             finalVal = 'OPERATIVO LIBRE';
-            isOperAutocomplete = true;
           } else if (typedVal) {
             const match = wizardServices.find(s => s.toLowerCase().startsWith(typedVal));
             if (match) finalVal = match;
           }
           setVal(finalVal);
           
-          if (finalVal !== (row.servicio || '') || isOperAutocomplete) {
+          if (finalVal !== (row.servicio || '') || finalVal.toLowerCase() === 'operativo libre') {
              const patch = { servicio: finalVal };
-             if (isOperAutocomplete) patch.estado = 'OPERATIVO';
+             if (finalVal.toLowerCase() === 'operativo libre') patch.estado = 'OPERATIVO';
              onSaveCell(row.id, patch);
           }
         }}
@@ -412,20 +414,18 @@ function ServiceInput({ row, onSaveCell, wizardServices }) {
             e.preventDefault();
             let finalVal = val;
             const typedVal = finalVal.trim().toLowerCase();
-            let isOperAutocomplete = false;
             
             if (typedVal === 'oper') {
               finalVal = 'OPERATIVO LIBRE';
-              isOperAutocomplete = true;
             } else if (typedVal) {
               const match = wizardServices.find(s => s.toLowerCase().startsWith(typedVal));
               if (match) finalVal = match;
             }
             setVal(finalVal);
             
-            if (finalVal !== (row.servicio || '') || isOperAutocomplete) {
+            if (finalVal !== (row.servicio || '') || finalVal.toLowerCase() === 'operativo libre') {
                const patch = { servicio: finalVal };
-               if (isOperAutocomplete) patch.estado = 'OPERATIVO';
+               if (finalVal.toLowerCase() === 'operativo libre') patch.estado = 'OPERATIVO';
                onSaveCell(row.id, patch);
             }
             
