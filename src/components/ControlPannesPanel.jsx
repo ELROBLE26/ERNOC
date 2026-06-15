@@ -680,8 +680,7 @@ export function ControlPannesPanel({ rows }) {
             </div>
           </div>
 
-          {/* Image Paste Box */}
-          <div 
+                     <div 
              onPaste={handlePaste} 
              tabIndex={0}
              style={{ 
@@ -690,9 +689,6 @@ export function ControlPannesPanel({ rows }) {
                height: 0, // Fuerza a que el contenedor no se expanda más allá de lo que flex:1 le permite
                border: '2px dashed #cbd5e0', 
                borderRadius: '8px', 
-               display: 'flex', 
-               justifyContent: 'center', 
-               alignItems: 'center',
                backgroundColor: pastedImage ? '#fff' : '#f7fafc',
                cursor: 'pointer',
                overflow: 'hidden',
@@ -701,13 +697,15 @@ export function ControlPannesPanel({ rows }) {
              }}
              title="Haz clic aquí y presiona Cmd+V o Ctrl+V para pegar una imagen"
            >
-             {pastedImage ? (
-               <img src={pastedImage} alt="Pegado" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-             ) : (
-               <div style={{ color: '#a0aec0', fontWeight: 'bold', fontSize: '24px', textAlign: 'center', opacity: 0.3, userSelect: 'none', padding: '20px' }}>
-                 NO SE REGISTRAN OS EN TURNO
-               </div>
-             )}
+             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+               {pastedImage ? (
+                 <img src={pastedImage} alt="Pegado" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+               ) : (
+                 <div style={{ color: '#a0aec0', fontWeight: 'bold', fontSize: '24px', textAlign: 'center', opacity: 0.3, userSelect: 'none', padding: '20px' }}>
+                   NO SE REGISTRAN OS EN TURNO
+                 </div>
+               )}
+             </div>
              {pastedImage && (
                <button 
                  onClick={(e) => { e.stopPropagation(); setPastedImage(null); }} 
