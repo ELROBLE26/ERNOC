@@ -554,11 +554,29 @@ function App() {
               {!sidebarCollapsed && <span className="sidebar-link-text">Configuración</span>}
             </button>
           </nav>
-          <div className="sidebar-foot">
+          <div className="sidebar-foot" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span className="sidebar-status-pill">
               <span className="sidebar-status-dot" />
               {!sidebarCollapsed && (isSupabaseConfigured ? 'Supabase conectado' : 'Sin configurar')}
             </span>
+            {!sidebarCollapsed && (
+              <a 
+                href="https://zyteron.cl" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{
+                  marginTop: '8px',
+                  fontSize: '0.68rem',
+                  color: 'var(--gray-400)',
+                  textDecoration: 'none',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => { e.target.style.color = 'var(--navy-600)'; }}
+                onMouseLeave={(e) => { e.target.style.color = 'var(--gray-400)'; }}
+              >
+                Creado por Zyteron
+              </a>
+            )}
           </div>
         </aside>
 
