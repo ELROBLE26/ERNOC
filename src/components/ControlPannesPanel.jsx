@@ -178,20 +178,8 @@ export function ControlPannesPanel({ rows }) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  const findColumnKey = (rowKeys, candidates) => {
-    for (const candidate of candidates) {
-      const exactMatch = rowKeys.find(
-        (k) => removeAccents(k.toLowerCase().trim()) === removeAccents(candidate.toLowerCase().trim())
-      );
-      if (exactMatch) return exactMatch;
-    }
-    for (const candidate of candidates) {
-      const partialMatch = rowKeys.find((k) =>
-        removeAccents(k.toLowerCase()).includes(removeAccents(candidate.toLowerCase()))
-      );
-      if (partialMatch) return partialMatch;
-    }
-    return null;
+  const findColumnKeyRegex = (rowKeys, regex) => {
+    return rowKeys.find(k => regex.test(removeAccents(k).toLowerCase().trim()));
   };
 
   const handlePaste = (e) => {
@@ -240,25 +228,37 @@ export function ControlPannesPanel({ rows }) {
       });
 
       if (matchedBus) {
-        const headers = Object.keys(rtgData[0]);
-        const keyEmision = findColumnKey(headers, ['Emisión RTG', 'Emision RTG', 'Fecha Emision', 'Emision']) || headers[3];
-        const keyVencimiento = findColumnKey(headers, ['Vencimiento RTG', 'Fecha Vencimiento', 'Vencimiento', 'Vence']) || headers[4];
+        const headers = Object.keys(rtgData[0] || {});
+        // Búsqueda inteligente por Regex a prueba de balas
+        const keyEmision = findColumnKeyRegex(headers, /emisi[oó]n.*rtg/i) || findColumnKeyRegex(headers, /emisi[oó]n/i) || headers[3];
+        const keyVencimiento = findColumnKeyRegex(headers, /vencimiento.*rtg|vence.*rtg/i) || findColumnKeyRegex(headers, /vencimiento/i) || headers[4];
+        const keyDias = findColumnKeyRegex(headers, /d[ií]as.*vencimiento/i) || findColumnKeyRegex(headers, /d[ií]as/i);
         
         const rawEmision = keyEmision ? row[keyEmision] : null;
         const rawVencimiento = keyVencimiento ? row[keyVencimiento] : null;
+        const rawDias = keyDias ? row[keyDias] : null;
         
         const fechaEmision = formatDateToDDMMYYYY(rawEmision);
         const fechaVencimiento = formatDateToDDMMYYYY(rawVencimiento);
         
         // Calculate live days
         let liveDays = 0;
+        let usedFileDays = false;
+        
+        if (rawDias !== null && rawDias !== undefined && rawDias !== '') {
+          liveDays = parseInt(rawDias, 10);
+          usedFileDays = !isNaN(liveDays);
+        }
+        
         const vDate = parseDateString(fechaVencimiento);
-        if (vDate) {
-          liveDays = Math.round((vDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        } else {
-          // Fallback to what's in the file if date parsing failed
-          const daysStr = row['Dias Para Vencimiento RTG'] || row['Días Para Vencimiento RTG'] || '0';
-          liveDays = parseInt(daysStr, 10) || 0;
+        
+        if (!usedFileDays) {
+          if (vDate) {
+            liveDays = Math.round((vDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          } else {
+            const daysStr = row['Dias Para Vencimiento RTG'] || row['Días Para Vencimiento RTG'] || '0';
+            liveDays = parseInt(daysStr, 10) || 0;
+          }
         }
 
         if (liveDays < 0) {
