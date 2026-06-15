@@ -140,9 +140,9 @@ export function ControlPannesPanel({ rows }) {
   const formatDateToDDMMYYYY = (val) => {
     if (!val) return '';
     if (val instanceof Date) {
-      const d = val.getDate().toString().padStart(2, '0');
-      const m = (val.getMonth() + 1).toString().padStart(2, '0');
-      const y = val.getFullYear();
+      const d = val.getUTCDate().toString().padStart(2, '0');
+      const m = (val.getUTCMonth() + 1).toString().padStart(2, '0');
+      const y = val.getUTCFullYear();
       return `${d}/${m}/${y}`;
     }
     if (typeof val === 'number') {
@@ -233,12 +233,9 @@ export function ControlPannesPanel({ rows }) {
       });
 
       if (matchedBus) {
-        // En lugar de buscar por nombre (que falla si el archivo dice "Vencimiento anterior"), 
-        // usamos explícitamente la Columna D (index 3) para Emisión y Columna E (index 4) para Vencimiento
-        // tomando los headers del primer registro.
         const headers = Object.keys(rtgData[0]);
-        const keyEmision = headers[3];
-        const keyVencimiento = headers[4];
+        const keyEmision = findColumnKey(headers, ['Emisión RTG', 'Emision RTG', 'Fecha Emision', 'Emision']) || headers[3];
+        const keyVencimiento = findColumnKey(headers, ['Vencimiento RTG', 'Fecha Vencimiento', 'Vencimiento', 'Vence']) || headers[4];
         
         const rawEmision = keyEmision ? row[keyEmision] : null;
         const rawVencimiento = keyVencimiento ? row[keyVencimiento] : null;
