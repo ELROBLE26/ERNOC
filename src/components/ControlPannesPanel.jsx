@@ -139,28 +139,34 @@ export function ControlPannesPanel({ rows }) {
 
   const formatDateToDDMMYYYY = (val) => {
     if (!val) return '';
-    if (val instanceof Date) {
-      const d = val.getUTCDate().toString().padStart(2, '0');
-      const m = (val.getUTCMonth() + 1).toString().padStart(2, '0');
-      const y = val.getUTCFullYear();
-      return `${d}/${m}/${y}`;
+    
+    const formatOut = (d, m, y) => `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+
+    if (val instanceof Date || Object.prototype.toString.call(val) === '[object Date]') {
+      return formatOut(val.getUTCDate(), val.getUTCMonth() + 1, val.getUTCFullYear());
     }
     if (typeof val === 'number') {
       const utcDate = new Date((val - 25569) * 86400 * 1000);
-      const d = utcDate.getUTCDate().toString().padStart(2, '0');
-      const m = (utcDate.getUTCMonth() + 1).toString().padStart(2, '0');
-      const y = utcDate.getUTCFullYear();
-      return `${d}/${m}/${y}`;
+      return formatOut(utcDate.getUTCDate(), utcDate.getUTCMonth() + 1, utcDate.getUTCFullYear());
     }
-    const str = String(val).trim().split(' ')[0];
+    
+    const str = String(val).trim().split('T')[0].split(' ')[0];
     const parts = str.split(/[-/]/);
     if (parts.length >= 3) {
       if (parts[0].length === 4) {
-        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+        return formatOut(parts[2], parts[1], parts[0]);
       } else {
+        let d = parts[0];
+        let m = parts[1];
         let y = parts[2];
         if (y.length === 2) y = '20' + y;
-        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${y}`;
+        
+        // Si el mes es mayor a 12, sabemos con certeza que la entrada venía como MM-DD-YYYY.
+        if (parseInt(m, 10) > 12 && parseInt(d, 10) <= 12) {
+          return formatOut(m, d, y);
+        }
+        
+        return formatOut(d, m, y);
       }
     }
     return str;
@@ -215,7 +221,7 @@ export function ControlPannesPanel({ rows }) {
 
     const parseDateString = (ddmmyyyy) => {
       if (!ddmmyyyy) return null;
-      const parts = ddmmyyyy.split('/');
+      const parts = ddmmyyyy.split(/[-/]/);
       if (parts.length === 3) {
         return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
       }
