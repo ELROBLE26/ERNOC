@@ -30,12 +30,12 @@ export function NfcOperModal({
   const [otNumber, setOtNumber] = useState('');
   
   const [docs, setDocs] = useState({
-    permiso_circulacion: true,
-    soap: true,
-    revision_tecnica: true,
-    revision_gases: true,
-    certificado_recorrido: true,
-    certificado_inscripcion: true,
+    permiso_circulacion: false,
+    soap: false,
+    revision_tecnica: false,
+    revision_gases: false,
+    certificado_recorrido: false,
+    certificado_inscripcion: false,
   });
   const [showDocs, setShowDocs] = useState(false);
   const [docsLoading, setDocsLoading] = useState(false);
@@ -57,12 +57,12 @@ export function NfcOperModal({
             });
           } else {
             setDocs({
-              permiso_circulacion: true,
-              soap: true,
-              revision_tecnica: true,
-              revision_gases: true,
-              certificado_recorrido: true,
-              certificado_inscripcion: true,
+              permiso_circulacion: false,
+              soap: false,
+              revision_tecnica: false,
+              revision_gases: false,
+              certificado_recorrido: false,
+              certificado_inscripcion: false,
             });
           }
         } catch (err) {
@@ -85,9 +85,10 @@ export function NfcOperModal({
           ...docs
         });
       }
-      onSave(payloadToSave);
     } catch (err) {
-      console.error(err);
+      console.error('Error guardando revisión de documentos:', err);
+      alert('⚠️ No se pudieron guardar los documentos. Verifica que la tabla exista en Supabase.');
+    } finally {
       onSave(payloadToSave);
     }
   };
@@ -450,47 +451,63 @@ function TextInput({ label, value, onChange }) {
 
 function DocRow({ label, value, onChange, driveLink }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--gray-100)' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <span style={{ fontWeight: '600', fontSize: '14px', color: 'var(--gray-700)' }}>{label}</span>
-        {!value && driveLink && (
+    <div style={{ 
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+      padding: '12px 16px', border: '1px solid', 
+      borderColor: value === true ? 'var(--success-200)' : (value === false ? 'var(--danger-200)' : 'var(--gray-200)'), 
+      borderRadius: '10px', marginBottom: '8px', 
+      background: value === true ? 'var(--success-50)' : (value === false ? 'var(--danger-50)' : 'white'),
+      transition: 'all 0.2s ease-in-out'
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <span style={{ 
+          fontWeight: '700', fontSize: '15px', 
+          color: value === true ? 'var(--success-800)' : (value === false ? 'var(--danger-800)' : 'var(--gray-800)') 
+        }}>{label}</span>
+        {value === false && driveLink && (
           <a 
             href={driveLink} 
             target="_blank" 
             rel="noreferrer"
             style={{ 
-              display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', 
-              color: 'var(--primary-600)', textDecoration: 'none', background: 'var(--primary-50)', 
-              padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', width: 'fit-content'
+              display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', 
+              color: 'var(--danger-700)', textDecoration: 'none', background: 'white', 
+              padding: '6px 10px', borderRadius: '6px', fontWeight: 'bold', width: 'fit-content', 
+              border: '1px solid var(--danger-300)', marginTop: '2px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}
           >
-            <Printer size={12} /> Buscar e Imprimir
+            <Printer size={14} /> Buscar e Imprimir
           </a>
         )}
       </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ display: 'flex', background: 'var(--gray-100)', padding: '4px', borderRadius: '8px', gap: '4px' }}>
         <button
           type="button"
           onClick={() => onChange(true)}
           style={{
-            padding: '4px 12px', borderRadius: '4px', border: '1px solid',
-            background: value ? 'var(--success-500)' : 'transparent',
-            color: value ? 'white' : 'var(--gray-500)',
-            borderColor: value ? 'var(--success-500)' : 'var(--gray-300)',
-            cursor: 'pointer', fontWeight: 'bold'
+            padding: '8px 16px', borderRadius: '6px', border: 'none',
+            background: value === true ? 'var(--success-500)' : 'transparent',
+            color: value === true ? 'white' : 'var(--gray-600)',
+            cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s', 
+            boxShadow: value === true ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
           }}
         >
           SÍ
         </button>
         <button
           type="button"
-          onClick={() => onChange(false)}
+          onClick={() => {
+            onChange(false);
+            if (value !== false && driveLink) {
+              window.open(driveLink, '_blank');
+            }
+          }}
           style={{
-            padding: '4px 12px', borderRadius: '4px', border: '1px solid',
-            background: !value ? 'var(--danger-500)' : 'transparent',
-            color: !value ? 'white' : 'var(--gray-500)',
-            borderColor: !value ? 'var(--danger-500)' : 'var(--gray-300)',
-            cursor: 'pointer', fontWeight: 'bold'
+            padding: '8px 16px', borderRadius: '6px', border: 'none',
+            background: value === false ? 'var(--danger-500)' : 'transparent',
+            color: value === false ? 'white' : 'var(--gray-600)',
+            cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s', 
+            boxShadow: value === false ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
           }}
         >
           NO
