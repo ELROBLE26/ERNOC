@@ -31,8 +31,21 @@ export function ControlPannesPanel({ rows }) {
   });
 
   const [otData, setOtData] = useState([]);
-  const [rtgData, setRtgData] = useState([]);
-  const [pastedImage, setPastedImage] = useState(null);
+  const [rtgData, setRtgData] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ernoc_rtg_data');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [pastedImage, setPastedImage] = useState(() => {
+    try {
+      return localStorage.getItem('ernoc_pasted_image') || null;
+    } catch {
+      return null;
+    }
+  });
   const [manualPannes, setManualPannes] = useState({});
 
   const fueraServicioOT = useMemo(() => {
@@ -277,6 +290,24 @@ export function ControlPannesPanel({ rows }) {
     return results;
   }, [rtgData, rows]);
 
+  // Save rtgData to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ernoc_rtg_data', JSON.stringify(rtgData));
+    } catch {}
+  }, [rtgData]);
+
+  // Save pastedImage to localStorage
+  useEffect(() => {
+    try {
+      if (pastedImage) {
+        localStorage.setItem('ernoc_pasted_image', pastedImage);
+      } else {
+        localStorage.removeItem('ernoc_pasted_image');
+      }
+    } catch {}
+  }, [pastedImage]);
+
   // Cleanup manual pannes for buses that are no longer in the list
   useEffect(() => {
     setManualPannes(prev => {
@@ -308,25 +339,25 @@ export function ControlPannesPanel({ rows }) {
       {/* FLOTA TOTAL */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#e2e8f0', fontWeight: 'bold' }}>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>FLOTA {tipo === 'RIGIDO' ? 'TOTAL' : 'ARTICULADOS'}</div>
-        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center' }}>{flotaTotal}</div>
+        <div style={{ width: '100px', padding: '0px', textAlign: 'center', fontSize: '15px', alignContent: 'center' }}>{flotaTotal}</div>
       </div>
 
       {/* FUERA DE SERVICIO (OT) */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#fff' }}>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>FUERA DE SERVICIO (OT)</div>
-        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center', fontWeight: 'bold' }}>{fueraServicioOT}</div>
+        <div style={{ width: '100px', padding: '0px', textAlign: 'center', fontWeight: 'bold', fontSize: '15px', alignContent: 'center' }}>{fueraServicioOT}</div>
       </div>
 
       {/* Manual Rows */}
       {CATEGORIES.map(cat => (
         <div key={cat.key} style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: cat.color }}>
           <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', display: 'flex', alignItems: 'center' }}>{cat.label}</div>
-          <div style={{ width: '100px', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '100px', padding: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <input 
               type="number" 
               value={manualCounts[tipo][cat.key] !== undefined ? manualCounts[tipo][cat.key] : 0} 
               onChange={(e) => handleManualCountChange(tipo, cat.key, e.target.value)}
-              style={{ width: '100%', border: 'none', textAlign: 'center', backgroundColor: 'transparent', outline: 'none' }}
+              style={{ width: '100%', height: '100%', border: 'none', textAlign: 'center', backgroundColor: 'transparent', outline: 'none', margin: 0, padding: 0, fontSize: '15px', fontWeight: 'bold' }}
               min="0"
             />
           </div>
@@ -336,26 +367,28 @@ export function ControlPannesPanel({ rows }) {
       {/* TOTAL DISPONIBLES */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#90cdf4', fontWeight: 'bold' }}>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>TOTAL DISPONIBLES</div>
-        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center' }}>{totalDisponibles}</div>
+        <div style={{ width: '100px', padding: '0px', textAlign: 'center', fontSize: '15px', alignContent: 'center' }}>{totalDisponibles}</div>
       </div>
 
       {/* PO */}
       <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#fff' }}>
         <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>PO</div>
-        <div style={{ width: '100px', padding: '2px 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '100px', padding: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
            <input 
               type="number" 
               value={po[tipo] !== undefined ? po[tipo] : 0} 
               onChange={(e) => setPo(prev => ({ ...prev, [tipo]: parseInt(e.target.value, 10) || 0 }))}
-              style={{ width: '100%', border: 'none', textAlign: 'center', fontWeight: 'bold', outline: 'none' }}
+              style={{ width: '100%', height: '100%', border: 'none', textAlign: 'center', fontWeight: 'bold', outline: 'none', margin: 0, padding: 0, fontSize: '15px' }}
             />
         </div>
       </div>
 
-      {/* DIFERENCIA */}
-      <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: '#63b3ed', fontWeight: 'bold' }}>
-        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>DIFERENCIA</div>
-        <div style={{ width: '100px', padding: '2px 4px', textAlign: 'center' }}>{diferencia}</div>
+      {/* Diferencia P.O */}
+      <div style={{ display: 'flex', borderTop: '1px solid #000', backgroundColor: diferencia >= 0 ? '#c6f6d5' : '#fed7d7', fontWeight: 'bold' }}>
+        <div style={{ flex: 1, padding: '2px 4px', borderRight: '1px solid #000' }}>Diferencia P.O</div>
+        <div style={{ width: '100px', padding: '0px', textAlign: 'center', color: diferencia >= 0 ? '#2f855a' : '#c53030', fontSize: '15px', alignContent: 'center' }}>
+          {diferencia > 0 ? `+${diferencia}` : diferencia}
+        </div>
       </div>
     </div>
   );
@@ -389,13 +422,20 @@ export function ControlPannesPanel({ rows }) {
             <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleRTGUpload} />
           </label>
           {rtgData.length > 0 && (
-            <button 
-              onClick={() => { setRtgData([]); setManualPannes({}); }} 
-              className="danger-button" 
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#fc8181', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              Limpiar Tabla
-            </button>
+            <button
+                onClick={() => {
+                  setRtgData([]);
+                  setManualPannes({});
+                  setPastedImage(null);
+                  try {
+                    localStorage.removeItem('ernoc_rtg_data');
+                    localStorage.removeItem('ernoc_pasted_image');
+                  } catch {}
+                }} 
+                style={{ background: '#e53e3e', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+              >
+                Limpiar
+              </button>
           )}
         </div>
       </div>
