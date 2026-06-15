@@ -90,7 +90,8 @@ export function ControlPannesPanel({ rows }) {
       reader.onload = (e) => {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          // Remover cellDates: true para prevenir que SheetJS invierta el día y mes de fechas texto
+          const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           
           // Try to find the header row naturally or just convert starting from 1
@@ -146,7 +147,7 @@ export function ControlPannesPanel({ rows }) {
       return formatOut(val.getUTCDate(), val.getUTCMonth() + 1, val.getUTCFullYear());
     }
     if (typeof val === 'number') {
-      const utcDate = new Date((val - 25569) * 86400 * 1000);
+      const utcDate = new Date((Math.floor(val) - 25569) * 86400 * 1000);
       return formatOut(utcDate.getUTCDate(), utcDate.getUTCMonth() + 1, utcDate.getUTCFullYear());
     }
     
