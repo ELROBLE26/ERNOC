@@ -17,6 +17,14 @@ const DOC_COLUMNS = [
 ];
 
 function StatusBadge({ value }) {
+  if (value === null || value === undefined) {
+    return (
+      <span className="doc-badge" style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}>
+        <AlertTriangle size={13} />
+        <span>PEND.</span>
+      </span>
+    );
+  }
   if (value) {
     return (
       <span className="doc-badge doc-badge-ok">
@@ -77,7 +85,7 @@ export function DocumentReviewPanel({ rows }) {
   const [revisions, setRevisions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'missing' | 'complete'
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'missing' | 'complete' | 'pending'
   const [terminalFilter, setTerminalFilter] = useState('Todos');
   const [sortField, setSortField] = useState(null);
   const [sortAsc, setSortAsc] = useState(true);
@@ -105,23 +113,30 @@ export function DocumentReviewPanel({ rows }) {
 
   const mergedData = useMemo(() => {
     return rows.map((bus) => {
-      const rev = revisions.find(r => r.ppu === bus.ppu) || {
-        permiso_circulacion: true,
-        soap: true,
-        revision_tecnica: true,
-        revision_gases: true,
-        certificado_recorrido: true,
-        certificado_inscripcion: true,
-      };
-      const docCount = DOC_COLUMNS.filter(col => rev[col.key]).length;
-      const missingCount = DOC_COLUMNS.length - docCount;
-      return {
-        ...bus,
-        ...rev,
-        docCount,
-        missingCount,
-        compliance: Math.round((docCount / DOC_COLUMNS.length) * 100),
-      };
+      const rev = revisions.find(r => r.ppu === bus.ppu);
+      if (rev) {
+        const docCount = DOC_COLUMNS.filter(col => rev[col.key]).length;
+        const missingCount = DOC_COLUMNS.length - docCount;
+        return {
+          ...bus,
+          ...rev,
+          hasRevision: true,
+          docCount,
+          missingCount,
+          compliance: Math.round((docCount / DOC_COLUMNS.length) * 100),
+        };
+      } else {
+        const emptyRev = {};
+        DOC_COLUMNS.forEach(c => emptyRev[c.key] = null);
+        return {
+          ...bus,
+          ...emptyRev,
+          hasRevision: false,
+          docCount: 0,
+          missingCount: 0,
+          compliance: null,
+        };
+      }
     });
   }, [rows, revisions]);
 
@@ -133,9 +148,11 @@ export function DocumentReviewPanel({ rows }) {
     }
 
     if (filterMode === 'missing') {
-      data = data.filter(item => item.missingCount > 0);
+      data = data.filter(item => item.hasRevision && item.missingCount > 0);
     } else if (filterMode === 'complete') {
-      data = data.filter(item => item.missingCount === 0);
+      data = data.filter(item => item.hasRevision && item.missingCount === 0);
+    } else if (filterMode === 'pending') {
+      data = data.filter(item => !item.hasRevision);
     }
 
     if (searchTerm) {
@@ -161,19 +178,23 @@ export function DocumentReviewPanel({ rows }) {
 
   const stats = useMemo(() => {
     const total = mergedData.length;
-    const fullCompliance = mergedData.filter(b => b.missingCount === 0).length;
-    const withMissing = total - fullCompliance;
-    const totalDocs = total * DOC_COLUMNS.length;
-    const docsOk = mergedData.reduce((sum, b) => sum + b.docCount, 0);
+    const reviewedBuses = mergedData.filter(b => b.hasRevision);
+    const totalReviewed = reviewedBuses.length;
+    const pendingCount = total - totalReviewed;
+    const fullCompliance = reviewedBuses.filter(b => b.missingCount === 0).length;
+    const withMissing = totalReviewed - fullCompliance;
+    
+    const totalDocs = totalReviewed * DOC_COLUMNS.length;
+    const docsOk = reviewedBuses.reduce((sum, b) => sum + b.docCount, 0);
     const globalCompliance = totalDocs > 0 ? Math.round((docsOk / totalDocs) * 100) : 0;
 
     const perDoc = DOC_COLUMNS.map(col => ({
       ...col,
-      ok: mergedData.filter(b => b[col.key]).length,
-      missing: mergedData.filter(b => !b[col.key]).length,
+      ok: reviewedBuses.filter(b => b[col.key] === true).length,
+      missing: reviewedBuses.filter(b => b[col.key] === false).length,
     }));
 
-    return { total, fullCompliance, withMissing, globalCompliance, perDoc };
+    return { total, totalReviewed, pendingCount, fullCompliance, withMissing, globalCompliance, perDoc };
   }, [mergedData]);
 
   const terminals = useMemo(() => {
@@ -259,7 +280,7 @@ export function DocumentReviewPanel({ rows }) {
           <ComplianceRing percentage={stats.globalCompliance} />
           <div className="doc-kpi-ring-text">
             <strong>Cumplimiento Global</strong>
-            <span>{stats.total} buses analizados</span>
+            <span>{stats.totalReviewed} buses analizados</span>
           </div>
         </div>
 
@@ -289,7 +310,7 @@ export function DocumentReviewPanel({ rows }) {
           </div>
           <div className="doc-kpi-bars">
             {stats.perDoc.map(doc => {
-              const pct = stats.total > 0 ? Math.round((doc.ok / stats.total) * 100) : 0;
+              const pct = stats.totalReviewed > 0 ? Math.round((doc.ok / stats.totalReviewed) * 100) : 0;
               const barColor = pct >= 90 ? '#16a34a' : pct >= 70 ? '#d97706' : '#dc2626';
               return (
                 <div className="doc-kpi-bar-row" key={doc.key}>
@@ -339,6 +360,13 @@ export function DocumentReviewPanel({ rows }) {
           >
             <CheckCircle2 size={12} /> Completos <span className="doc-chip-count">{stats.fullCompliance}</span>
           </button>
+          <button
+            className={`doc-chip ${filterMode === 'pending' ? 'doc-chip-active' : ''}`}
+            onClick={() => setFilterMode('pending')}
+            style={{ backgroundColor: filterMode === 'pending' ? '#e5e7eb' : 'transparent', color: filterMode === 'pending' ? '#374151' : '#6b7280', borderColor: '#d1d5db' }}
+          >
+            <AlertTriangle size={12} /> Pendientes <span className="doc-chip-count">{stats.pendingCount}</span>
+          </button>
         </div>
 
         <select
@@ -373,7 +401,7 @@ export function DocumentReviewPanel({ rows }) {
           <tbody>
             {filteredData.map((row, idx) => {
               const isExpanded = expandedRow === row.id;
-              const rowClass = row.missingCount > 0 ? 'doc-row-alert' : 'doc-row-ok';
+              const rowClass = !row.hasRevision ? 'doc-row-pending' : (row.missingCount > 0 ? 'doc-row-alert' : 'doc-row-ok');
               return (
                 <>
                   <tr key={row.id} className={`doc-table-row ${rowClass}`}>
@@ -389,12 +417,17 @@ export function DocumentReviewPanel({ rows }) {
                     <td style={{ textAlign: 'center' }}>
                       <span
                         className="doc-compliance-pill"
-                        style={{
-                          backgroundColor: row.compliance >= 100 ? '#dcfce7' : row.compliance >= 70 ? '#fef3c7' : '#fee2e2',
-                          color: row.compliance >= 100 ? '#166534' : row.compliance >= 70 ? '#92400e' : '#991b1b',
-                        }}
+                        style={
+                          row.hasRevision ? {
+                            backgroundColor: row.compliance >= 100 ? '#dcfce7' : row.compliance >= 70 ? '#fef3c7' : '#fee2e2',
+                            color: row.compliance >= 100 ? '#166534' : row.compliance >= 70 ? '#92400e' : '#991b1b',
+                          } : {
+                            backgroundColor: '#f3f4f6',
+                            color: '#6b7280'
+                          }
+                        }
                       >
-                        {row.compliance}%
+                        {row.hasRevision ? `${row.compliance}%` : 'PEND.'}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -413,11 +446,11 @@ export function DocumentReviewPanel({ rows }) {
                         <div className="doc-detail-content">
                           <div className="doc-detail-grid">
                             {DOC_COLUMNS.map(col => (
-                              <div key={col.key} className={`doc-detail-item ${row[col.key] ? 'doc-detail-ok' : 'doc-detail-missing'}`}>
+                              <div key={col.key} className={`doc-detail-item ${row[col.key] === null ? 'doc-detail-pending' : (row[col.key] ? 'doc-detail-ok' : 'doc-detail-missing')}`}>
                                 <FileText size={16} />
                                 <div>
                                   <strong>{col.label}</strong>
-                                  <span>{row[col.key] ? 'Vigente' : 'FALTANTE'}</span>
+                                  <span>{row[col.key] === null ? 'PENDIENTE' : (row[col.key] ? 'Vigente' : 'FALTANTE')}</span>
                                 </div>
                               </div>
                             ))}
@@ -426,7 +459,7 @@ export function DocumentReviewPanel({ rows }) {
                             <span><strong>Bus:</strong> {row.cod} · {row.ppu}</span>
                             <span><strong>Terminal:</strong> {row.terminal}</span>
                             <span><strong>Tipo:</strong> {row.tipo || '—'}</span>
-                            <span><strong>Cumplimiento:</strong> {row.compliance}%</span>
+                            <span><strong>Cumplimiento:</strong> {row.hasRevision ? `${row.compliance}%` : 'Pendiente'}</span>
                           </div>
                         </div>
                       </td>

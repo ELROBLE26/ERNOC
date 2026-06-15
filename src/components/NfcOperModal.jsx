@@ -36,12 +36,12 @@ export function NfcOperModal({
   const [activeSection, setActiveSection] = useState('problem'); // 'problem' | 'docs'
   
   const [docs, setDocs] = useState({
-    permiso_circulacion: true,
-    soap: true,
-    revision_tecnica: true,
-    revision_gases: true,
-    certificado_recorrido: true,
-    certificado_inscripcion: true,
+    permiso_circulacion: null,
+    soap: null,
+    revision_tecnica: null,
+    revision_gases: null,
+    certificado_recorrido: null,
+    certificado_inscripcion: null,
   });
   const [docsLoading, setDocsLoading] = useState(false);
 
@@ -62,12 +62,12 @@ export function NfcOperModal({
             });
           } else {
             setDocs({
-              permiso_circulacion: true,
-              soap: true,
-              revision_tecnica: true,
-              revision_gases: true,
-              certificado_recorrido: true,
-              certificado_inscripcion: true,
+              permiso_circulacion: null,
+              soap: null,
+              revision_tecnica: null,
+              revision_gases: null,
+              certificado_recorrido: null,
+              certificado_inscripcion: null,
             });
           }
         } catch (err) {
@@ -82,7 +82,7 @@ export function NfcOperModal({
 
   const handleSaveWrapper = async (payloadToSave) => {
     try {
-      if (bus?.ppu && bus?.cod) {
+      if (bus?.ppu && bus?.cod && Object.values(docs).some(v => v !== null)) {
         await upsertDocumentRevision({
           ppu: bus.ppu,
           cod: bus.cod,
@@ -556,7 +556,7 @@ function buildInitialForm(terminal, scheduledMaintenance, bus) {
 
 function DocRow({ label, value, onChange, driveLink }) {
   return (
-    <div className={`nfcv2-doc-row ${value ? 'nfcv2-doc-ok' : 'nfcv2-doc-missing'}`}>
+    <div className={`nfcv2-doc-row ${value === true ? 'nfcv2-doc-ok' : value === false ? 'nfcv2-doc-missing' : 'nfcv2-doc-pending'}`}>
       <div className="nfcv2-doc-info">
         <span className="nfcv2-doc-label">{label}</span>
         {value === false && driveLink && (
