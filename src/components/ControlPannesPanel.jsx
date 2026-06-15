@@ -345,20 +345,31 @@ export function ControlPannesPanel({ rows }) {
   const otrosFsList = useMemo(() => {
     return otrosFsData.map(row => {
       const keys = Object.keys(row);
-      const findKey = (possibleNames) => {
-        const lowerNames = possibleNames.map(n => n.toLowerCase());
-        const k = keys.find(k => {
-          const cleanK = removeAccents(k).trim().toLowerCase();
-          return lowerNames.includes(cleanK) || lowerNames.includes(k.trim().toLowerCase());
-        });
-        return k ? row[k] : '';
+      const getVal = (exactNames, regex) => {
+        // 1. Exact match (ignoring case, accents, spaces)
+        const lowerNames = exactNames.map(n => removeAccents(n).toLowerCase().trim());
+        let k = keys.find(k => lowerNames.includes(removeAccents(k).toLowerCase().trim()));
+        if (k && row[k] !== undefined && row[k] !== '') return row[k];
+        
+        // 2. Regex match
+        if (regex) {
+           k = keys.find(k => regex.test(removeAccents(k).toLowerCase()));
+           if (k && row[k] !== undefined && row[k] !== '') return row[k];
+        }
+        
+        // 3. Substring match
+        for (let name of lowerNames) {
+           k = keys.find(k => removeAccents(k).toLowerCase().includes(name));
+           if (k && row[k] !== undefined && row[k] !== '') return row[k];
+        }
+        return '';
       };
       
-      const interno = findKey(['código', 'codigo', 'interno', 'n° interno bus', 'nro interno', 'n° interno', 'cod', 'numero interno']);
-      const ppu = findKey(['ppu', 'patente']);
-      let fechaRaw = findKey(['fecha']);
-      const horaRaw = findKey(['hora']);
-      const observacion = findKey(['observación', 'observacion', 'observaciones', 'motivo', 'detalle']);
+      const interno = getVal(['código', 'codigo', 'interno', 'n° interno bus', 'nro interno', 'n° interno', 'cod', 'numero interno', 'cod.', 'cod. bus'], /c[oó]digo|interno|cod/i);
+      const ppu = getVal(['ppu', 'patente', 'placa'], /ppu|patente/i);
+      let fechaRaw = getVal(['fecha', 'fecha falla', 'fecha panne'], /fecha/i);
+      const horaRaw = getVal(['hora', 'hora falla', 'hora panne'], /hora/i);
+      const observacion = getVal(['observación', 'observacion', 'observaciones'], /observaci[oó]n|observaciones/i);
       
       const fecha = formatDateToDDMMYYYY(fechaRaw);
       
