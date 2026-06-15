@@ -93,7 +93,7 @@ export function EditableTable({
 
   const handleWizardServiceChange = (row, index, val) => {
     if (wizardRowId !== row.id) return; // Evitar doble trigger (Enter + Blur)
-    const patch = { servicio: val };
+    const patch = { servicio: String(val).toUpperCase() };
     if (val && val.toLowerCase() === 'operativo libre') {
       patch.estado = 'OPERATIVO';
     }
@@ -263,7 +263,7 @@ export function EditableTable({
                           value={row.detalle_panne}
                           multiline
                           placeholder="Detalle de panne"
-                          onSave={(value) => onSaveCell(row.id, { detalle_panne: value })}
+                          onSave={(value) => onSaveCell(row.id, { detalle_panne: String(value).toUpperCase() })}
                         />
                       </td>
                       <td className="wide-cell">
@@ -271,7 +271,7 @@ export function EditableTable({
                           value={row.observaciones}
                           multiline
                           placeholder="Observaciones"
-                          onSave={(value) => onSaveCell(row.id, { observaciones: value })}
+                          onSave={(value) => onSaveCell(row.id, { observaciones: String(value).toUpperCase() })}
                         />
                       </td>
                       <td>
@@ -285,13 +285,13 @@ export function EditableTable({
                               if (e.key === 'Enter' || e.key === 'Tab') {
                                 e.preventDefault();
                                 if (wizardRowId !== row.id) return;
-                                onSaveCell(row.id, { ubicacion: e.target.value });
+                                onSaveCell(row.id, { ubicacion: String(e.target.value).toUpperCase() });
                                 advanceWizard(index);
                               }
                             }}
                             onBlur={(e) => {
                               if (wizardRowId === row.id) {
-                                onSaveCell(row.id, { ubicacion: e.target.value });
+                                onSaveCell(row.id, { ubicacion: String(e.target.value).toUpperCase() });
                               }
                             }}
                           />
@@ -300,7 +300,7 @@ export function EditableTable({
                             inputId={`ubicacion-${row.id}`}
                             value={row.ubicacion}
                             onSave={(value) => {
-                              onSaveCell(row.id, { ubicacion: value });
+                              onSaveCell(row.id, { ubicacion: String(value).toUpperCase() });
                             }}
                           />
                         )}
@@ -404,7 +404,7 @@ function ServiceInput({ row, onSaveCell, wizardServices }) {
           setVal(finalVal);
           
           if (finalVal !== (row.servicio || '') || finalVal.toLowerCase() === 'operativo libre') {
-             const patch = { servicio: finalVal };
+             const patch = { servicio: finalVal.toUpperCase() };
              if (finalVal.toLowerCase() === 'operativo libre') patch.estado = 'OPERATIVO';
              onSaveCell(row.id, patch);
           }
@@ -424,7 +424,7 @@ function ServiceInput({ row, onSaveCell, wizardServices }) {
             setVal(finalVal);
             
             if (finalVal !== (row.servicio || '') || finalVal.toLowerCase() === 'operativo libre') {
-               const patch = { servicio: finalVal };
+               const patch = { servicio: finalVal.toUpperCase() };
                if (finalVal.toLowerCase() === 'operativo libre') patch.estado = 'OPERATIVO';
                onSaveCell(row.id, patch);
             }

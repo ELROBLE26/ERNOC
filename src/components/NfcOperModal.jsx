@@ -388,7 +388,7 @@ export function NfcOperModal({
                     <input
                       type="text"
                       value={form.detalle_panne}
-                      onChange={(e) => updateField('detalle_panne', e.target.value)}
+                      onChange={(e) => updateField('detalle_panne', String(e.target.value).toUpperCase())}
                       placeholder="Tipo de falla"
                     />
                   </div>
@@ -396,7 +396,7 @@ export function NfcOperModal({
                     <label>Observaciones</label>
                     <textarea
                       value={form.observaciones}
-                      onChange={(e) => updateField('observaciones', e.target.value)}
+                      onChange={(e) => updateField('observaciones', String(e.target.value).toUpperCase())}
                       rows={2}
                       placeholder="Descripción detallada..."
                     />

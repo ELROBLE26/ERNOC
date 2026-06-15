@@ -171,7 +171,7 @@ export function buildFleetUpdatePayload(operation) {
   }
 
   return {
-    estado: 'NO OPERATIVO',
+    estado: 'PENDIENTE',
     oper: operation.oper,
     vidrio: operation.vidrio,
     mant: operation.mant,
@@ -179,10 +179,11 @@ export function buildFleetUpdatePayload(operation) {
     adq: operation.adq,
     aft: operation.aft,
     sinies: operation.sinies,
-    detalle_panne: operation.detalle_panne ?? '',
-    observaciones: operation.observaciones ?? '',
-    ubicacion: operation.ubicacion || operation.terminal,
+    detalle_panne: String(operation.detalle_panne ?? '').toUpperCase(),
+    observaciones: String(operation.observaciones ?? '').toUpperCase(),
+    ubicacion: String(operation.ubicacion || operation.terminal).toUpperCase(),
     terminal: operation.terminal,
+    servicio: '',
   };
 }
 

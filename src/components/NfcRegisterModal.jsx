@@ -53,7 +53,8 @@ export function NfcRegisterModal({
 
   if (!open) return null;
 
-  const handleChange = (field, value) => {
+  const handleChange = (field, valueRaw) => {
+    const value = typeof valueRaw === 'string' ? valueRaw.toUpperCase() : valueRaw;
     let nextForm = { ...form, [field]: value };
     
     // Auto-fill logic
