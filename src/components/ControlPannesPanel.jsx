@@ -688,7 +688,8 @@ export function ControlPannesPanel({ rows }) {
              tabIndex={0}
              style={{ 
                flex: 1, 
-               minHeight: '200px',
+               minHeight: '100px', // permite achicarse si las tablas de arriba crecen
+               height: 0, // Fuerza a que el contenedor no se expanda más allá de lo que flex:1 le permite
                border: '2px dashed #cbd5e0', 
                borderRadius: '8px', 
                display: 'flex', 
