@@ -315,13 +315,13 @@ export function NfcOperModal({
                       label="Permiso de Circulación" 
                       value={docs.permiso_circulacion} 
                       onChange={(v) => setDocs(d => ({ ...d, permiso_circulacion: v }))} 
-                      driveLink="https://drive.google.com/drive/folders/1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0?usp=drive_link"
+                      driveLink={bus?.ppu ? `https://drive.google.com/drive/search?q=${encodeURIComponent(`"${bus.ppu}" parent:1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0`)}` : "https://drive.google.com/drive/folders/1Ps3s4gUF3l6Rf0k82rwoTVOTGtVh9mn0"}
                     />
                     <DocRow 
                       label="SOAP" 
                       value={docs.soap} 
                       onChange={(v) => setDocs(d => ({ ...d, soap: v }))} 
-                      driveLink="https://drive.google.com/drive/folders/1MYrseSdneeob9mm3ap7wyFStrEax0PzN?usp=sharing"
+                      driveLink={bus?.ppu ? `https://drive.google.com/drive/search?q=${encodeURIComponent(`"${bus.ppu}" parent:1MYrseSdneeob9mm3ap7wyFStrEax0PzN`)}` : "https://drive.google.com/drive/folders/1MYrseSdneeob9mm3ap7wyFStrEax0PzN"}
                     />
                     <DocRow 
                       label="Revisión Técnica" 
