@@ -650,7 +650,6 @@ export function ControlPannesPanel({ rows }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', fontFamily: 'sans-serif' }}>
                 <thead style={{ backgroundColor: '#ed8936', color: '#fff' }}>
                   <tr>
-                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>NUMERO INTERNO</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>PPU</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>TIPO</th>
                     <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>FECHA</th>
@@ -668,7 +667,6 @@ export function ControlPannesPanel({ rows }) {
                   ) : (
                     otrosFsList.map((b, idx) => (
                       <tr key={idx} style={{ backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.interno}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.ppu}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center', fontWeight: 'bold' }}>{b.tipo}</td>
                         <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.fecha}</td>
