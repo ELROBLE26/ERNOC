@@ -39,6 +39,14 @@ export function ControlPannesPanel({ rows }) {
       return [];
     }
   });
+  const [otrosFsData, setOtrosFsData] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ernoc_otros_fs_data');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
   const [pastedImage, setPastedImage] = useState(() => {
     try {
       return localStorage.getItem('ernoc_pasted_image') || null;
@@ -148,6 +156,17 @@ export function ControlPannesPanel({ rows }) {
       setRtgData(data);
     } catch (err) {
       alert('Error cargando RTG: ' + err.message);
+    }
+  };
+
+  const handleOtrosFsUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await parseExcelFile(file);
+      setOtrosFsData(data);
+    } catch (err) {
+      alert('Error cargando OTROS FS: ' + err.message);
     }
   };
 
@@ -297,6 +316,13 @@ export function ControlPannesPanel({ rows }) {
     } catch {}
   }, [rtgData]);
 
+  // Save otrosFsData to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ernoc_otros_fs_data', JSON.stringify(otrosFsData));
+    } catch {}
+  }, [otrosFsData]);
+
   // Save pastedImage to localStorage
   useEffect(() => {
     try {
@@ -313,9 +339,8 @@ export function ControlPannesPanel({ rows }) {
     setManualPannes(prev => {
       const next = { ...prev };
       let changed = false;
-      const currentInternos = new Set(rtgVencidas.map(b => String(b.interno || b.patente || '')));
       Object.keys(next).forEach(k => {
-        if (!currentInternos.has(k)) {
+        if (!rtgVencidas.some(b => String(b.interno) === k)) {
           delete next[k];
           changed = true;
         }
@@ -323,6 +348,41 @@ export function ControlPannesPanel({ rows }) {
       return changed ? next : prev;
     });
   }, [rtgVencidas]);
+
+  const otrosFsList = useMemo(() => {
+    return otrosFsData.map(row => {
+      const keys = Object.keys(row);
+      const getVal = (regex) => {
+        const k = keys.find(k => regex.test(k));
+        return k ? row[k] : '';
+      };
+      
+      const interno = getVal(/c[oó]digo|interno/i) || row['Código'] || '';
+      const ppu = getVal(/ppu|patente/i) || row['PPU'] || '';
+      let fechaRaw = getVal(/fecha/i) || row['Fecha'] || '';
+      const horaRaw = getVal(/hora/i) || row['Hora'] || '';
+      const observacion = getVal(/observaci[oó]n|observaciones/i) || row['Observaciones'] || '';
+      
+      const fecha = formatDateToDDMMYYYY(fechaRaw);
+      
+      // Formatting time if it's an excel decimal
+      let hora = horaRaw;
+      if (typeof horaRaw === 'number' && horaRaw < 1) {
+        const totalSeconds = Math.round(horaRaw * 86400);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        hora = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      }
+
+      return {
+        interno,
+        ppu,
+        fecha: fecha || fechaRaw,
+        hora,
+        observacion
+      };
+    }).filter(x => x.interno || x.ppu);
+  }, [otrosFsData]);
 
   const TableBlock = ({ title, tipo, flotaTotal, fueraServicioOT, totalDisponibles, diferencia }) => (
     <div style={{ marginBottom: '10px', border: '1px solid #000', fontFamily: 'sans-serif', fontSize: '11px' }}>
@@ -421,14 +481,21 @@ export function ControlPannesPanel({ rows }) {
             Subir Excel RTG
             <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleRTGUpload} />
           </label>
-          {rtgData.length > 0 && (
+          <label className="primary-button" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#ed8936', borderColor: '#dd6b20' }}>
+            <Upload size={16} />
+            OTROS FS
+            <input type="file" accept=".xlsx, .xls" style={{ display: 'none' }} onChange={handleOtrosFsUpload} />
+          </label>
+          {(rtgData.length > 0 || otrosFsData.length > 0) && (
             <button
                 onClick={() => {
                   setRtgData([]);
+                  setOtrosFsData([]);
                   setManualPannes({});
                   setPastedImage(null);
                   try {
                     localStorage.removeItem('ernoc_rtg_data');
+                    localStorage.removeItem('ernoc_otros_fs_data');
                     localStorage.removeItem('ernoc_pasted_image');
                   } catch {}
                 }} 
@@ -522,6 +589,43 @@ export function ControlPannesPanel({ rows }) {
                </tbody>
              </table>
            </div>
+
+            {/* DETALLE DE OTROS TABLE */}
+            <div style={{ marginTop: '20px' }}>
+              <div style={{ backgroundColor: '#1a365d', color: '#fff', padding: '6px', fontWeight: 'bold', fontSize: '12px', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }}>
+                DETALLE DE OTROS
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', fontFamily: 'sans-serif' }}>
+                <thead style={{ backgroundColor: '#ed8936', color: '#fff' }}>
+                  <tr>
+                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>NUMERO INTERNO</th>
+                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>PPU</th>
+                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>FECHA</th>
+                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>HORA</th>
+                    <th style={{ padding: '4px', border: '1px solid #cbd5e0', textAlign: 'center' }}>OBSERVACION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {otrosFsList.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '10px', textAlign: 'center', color: '#718096' }}>
+                        No hay datos de otros fuera de servicio. Sube el Excel OTROS FS para analizarlos.
+                      </td>
+                    </tr>
+                  ) : (
+                    otrosFsList.map((b, idx) => (
+                      <tr key={idx} style={{ backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0' }}>
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.interno}</td>
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.ppu}</td>
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.fecha}</td>
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{b.hora}</td>
+                        <td style={{ padding: '4px', border: '1px solid #e2e8f0', textAlign: 'left' }}>{b.observacion}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Image Paste Box */}
