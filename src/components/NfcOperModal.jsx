@@ -114,7 +114,7 @@ export function NfcOperModal({
     if (!otRecord) return;
     const isPreventiva = String(otRecord['Tipo OT'] || '').toUpperCase() === 'PREVENTIVA';
     const tipoOt = String(otRecord['Tipo OT'] || '').toUpperCase() || '';
-    const otNum = otRecord['Número OT'] || '';
+    const otNum = String(otRecord['Número OT'] ?? '');
     const detalleStr = String(isPreventiva ? (otRecord['Detalle ingreso'] || '') : (otRecord['Detalle correctiva'] || ''));
     
     const isVidrio = detalleStr.toLowerCase().includes('vidrio') || String(otRecord['Motivo panne'] || '').toLowerCase().includes('vidrio');
