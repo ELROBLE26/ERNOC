@@ -345,16 +345,20 @@ export function ControlPannesPanel({ rows }) {
   const otrosFsList = useMemo(() => {
     return otrosFsData.map(row => {
       const keys = Object.keys(row);
-      const getVal = (regex) => {
-        const k = keys.find(k => regex.test(k));
+      const findKey = (possibleNames) => {
+        const lowerNames = possibleNames.map(n => n.toLowerCase());
+        const k = keys.find(k => {
+          const cleanK = removeAccents(k).trim().toLowerCase();
+          return lowerNames.includes(cleanK) || lowerNames.includes(k.trim().toLowerCase());
+        });
         return k ? row[k] : '';
       };
       
-      const interno = getVal(/c[oó]digo|interno/i) || row['Código'] || row['Codigo'] || row['N° Interno Bus'] || row['Nro interno'] || row['N° interno'] || '';
-      const ppu = getVal(/ppu|patente/i) || row['PPU'] || '';
-      let fechaRaw = getVal(/fecha/i) || row['Fecha'] || '';
-      const horaRaw = getVal(/hora/i) || row['Hora'] || '';
-      const observacion = getVal(/observaci[oó]n|observaciones/i) || row['Observaciones'] || '';
+      const interno = findKey(['código', 'codigo', 'interno', 'n° interno bus', 'nro interno', 'n° interno', 'cod', 'numero interno']);
+      const ppu = findKey(['ppu', 'patente']);
+      let fechaRaw = findKey(['fecha']);
+      const horaRaw = findKey(['hora']);
+      const observacion = findKey(['observación', 'observacion', 'observaciones', 'motivo', 'detalle']);
       
       const fecha = formatDateToDDMMYYYY(fechaRaw);
       
