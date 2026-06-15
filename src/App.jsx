@@ -242,10 +242,26 @@ function App() {
         return;
       }
 
-      const terminalName = card.terminal_default || bus.terminal;
-      const maintenanceMatch = schedule.find(
-        (s) => (s.cod === bus.cod || s.ppu === bus.ppu) && s.terminal === terminalName
-      );
+      const terminalName = card.terminal_default || bus.terminal || '';
+      
+      const normalize = (str) => String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const busPpuNorm = normalize(bus.ppu);
+      const busCodNorm = normalize(bus.cod);
+      const termNorm = normalize(terminalName);
+
+      const maintenanceMatch = schedule.find((s) => {
+        const sPpuNorm = normalize(s.ppu);
+        const sCodNorm = normalize(s.cod);
+        const sTermNorm = normalize(s.terminal);
+        
+        const matchBus = (sPpuNorm && busPpuNorm && sPpuNorm === busPpuNorm) || 
+                         (sCodNorm && busCodNorm && sCodNorm === busCodNorm);
+        
+        // Match flexible de terminal (o si uno de los dos no tiene terminal, dejamos que coincida igual)
+        const matchTerm = (!sTermNorm || !termNorm || sTermNorm.includes(termNorm) || termNorm.includes(sTermNorm));
+        
+        return matchBus && matchTerm;
+      });
       
       setScheduledMaintenance(maintenanceMatch || null);
       setCurrentNfcBus(bus);
