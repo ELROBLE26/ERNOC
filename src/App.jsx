@@ -60,7 +60,14 @@ function App() {
   const [nfcError, setNfcError] = useState('');
   const [nfcSaving, setNfcSaving] = useState(false);
 
-  const [otPannesData, setOtPannesData] = useState([]);
+  const [otPannesData, setOtPannesData] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ernoc_ot_pannes');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const parseExcelFile = (file) => {
     return new Promise((resolve, reject) => {
@@ -98,7 +105,8 @@ function App() {
     try {
       const data = await parseExcelFile(file);
       setOtPannesData(data);
-      alert('Archivo OT cargado exitosamente. Ahora al pistolear se autollenará si hay coincidencias.');
+      try { localStorage.setItem('ernoc_ot_pannes', JSON.stringify(data)); } catch {}
+      alert(`Archivo OT cargado exitosamente (${data.length} registros). Se mantendrá guardado hasta que lo actualices o borres.`);
     } catch (err) {
       alert('Error cargando OT: ' + err.message);
     }
@@ -194,7 +202,7 @@ function App() {
       return;
     }
 
-    if (nfcOperOpen || nfcRegisterOpen || nfcSaving) {
+    if (nfcRegisterOpen || nfcSaving) {
       return;
     }
 
