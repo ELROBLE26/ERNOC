@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const READ_GAP_MS = 250;
-const DUPLICATE_WINDOW_MS = 2500;
+const READ_GAP_MS = 1000;
+const DUPLICATE_WINDOW_MS = 1500;
 const MIN_UID_LENGTH = 4;
 
 export function useNfcReader({ active, onRead }) {
