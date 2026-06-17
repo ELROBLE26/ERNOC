@@ -85,7 +85,7 @@ export function CuadraturaPanel() {
                       {
                         title: 'Bomba 2',
                         surtMatch: ['116', '117'],
-                        tankMatch: ['118', 'Isla 2']
+                        tankMatch: ['18', 'Isla 2']
                       },
                       {
                         title: 'Isla 3',
