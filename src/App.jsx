@@ -644,7 +644,7 @@ function App() {
                 onMouseEnter={(e) => { e.target.style.color = 'var(--navy-600)'; }}
                 onMouseLeave={(e) => { e.target.style.color = 'var(--gray-400)'; }}
               >
-                Creado por Zyteron
+                WEB DESARROLLADA POR ZYTERON
               </a>
             )}
           </div>
