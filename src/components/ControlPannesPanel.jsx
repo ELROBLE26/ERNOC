@@ -9,6 +9,7 @@ const CATEGORIES = [
   { key: 'sonda', label: 'SONDA', color: '#fdf3eb' },
   { key: 'camaras', label: 'CAMARAS', color: '#fdf3eb' },
   { key: 'cargaElectricos', label: 'CARGA DE BUSES ELECTRICOS', color: '#fdf3eb' },
+  { key: 'adminol', label: 'ADMINOL', color: '#fdf3eb' },
   { key: 'capacitacion', label: 'CAPACITACION', color: '#fdf3eb' },
   { key: 'fueraServicioOtros', label: 'FUERA DE SERVICIOS (OTROS)', color: '#f9c59f' },
   { key: 'fueraServicioReserva', label: 'FUERA DE SERVICIO FLOTA RESERVA (OTROS)', color: '#fdf3eb' },
